@@ -90,13 +90,6 @@
     \renewcommand{\chapnamefont}{\LARGE\rmfamily\bfseries}%
     \renewcommand{\chapnumfont}{\LARGE\rmfamily\bfseries}%
     \renewcommand{\chaptitlefont}{\Huge\rmfamily\bfseries}%
-    \renewcommand{\printchaptertitle}[1]{%
-        \chaptitlefont\hrule height 0.5pt \vspace{1em}%
-        {##1}\vspace{1em}\hrule height 0.5pt%
-        }%
-    \renewcommand{\printchapternum}{%
-        \chapnumfont\thechapter%
-        }%
 }
 
 \chapterstyle{mychapterstyle}
@@ -119,7 +112,7 @@
 
 \renewcommand{\listfigurename}{List of Figures}
 \renewcommand{\listtablename}{List of Tables}
-
+\renewcommand{\bibname}{References}
 % ********* General page styles **********
 
 %Get the correct line spacing. Note that \onehalfspacing DOES NOT work because of the way which LaTeX measures linespacing (which is different to Word).

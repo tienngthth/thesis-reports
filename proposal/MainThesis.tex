@@ -1,37 +1,41 @@
 \documentclass[instructions]{./Packages/uqthesis}
-
-
 \input{./Packages/LaTexPackages.tex}
 
-\title{Prolog optimizations in GraalVM}
-\author{Tien Nguyen}
+\title{Prolog Optimizations in GraalVM}
+\author{Thi Thuy Tien Nguyen}
 \currentdegrees{Master of Computer Science (Management)}
 \orcid{\href{add your ORCID url here}{Candidate's ORCID}}
-
-\date{August 22, 2024}
-\submittedfor{Master}
+\date{22 August 2024}
 \school{School of Electrical Engineering and Computer Science}
 \university{The University of Queensland}
+
+\titleformat{\chapter}{\LARGE\bfseries}{\thechapter}{1em}{\LARGE}
+\titlespacing{\chapter}{0pt}{-10pt}{5pt}
+\titlespacing{\section}{0pt}{8pt}{5pt}
+\titlespacing{\subsection}{0pt}{10pt}{5pt}
+\renewcommand{\contentsname}{\vspace{-50pt} \hfill\bfseries\LARGE TABLE OF CONTENTS \hfill \vspace{-10pt}}
+
 \begin{document}
 
 \frontmatter
 \maketitle
 \clearpage
 
-\section{Abstract}
-\normalfont
-\input{./Abstract/Abstract.tex}
+\begin{KeepFromToc}
+    \setcounter{page}{0} %reset the page counter
+    \tableofcontents
+\end{KeepFromToc}
 \clearpage
+\openany
 
 \mainmatter
 
-\input{./Chapter1/Introduction.tex}
+\input{./Abstract/Abstract.tex}
+\input{./Introduction/Introduction.tex}
+\input{./Background/Background.tex}
+\input{./Plan/Plan.tex}
 
-\input{./Chapter2/Chapter2.tex}
-
-\input{./Conclusion/Conclusion.tex}
-
-\bibliographystyle{elsarticle-num}
+\bibliographystyle{IEEEtran}
 
 \bibliography{./References/Bibliography}
 
