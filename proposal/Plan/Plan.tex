@@ -37,20 +37,20 @@ After developing the standalone components of the Prolog-based optimizer, the ne
 
 \subsection{Testing}
 Since the optimization phases involve significant transformations to the original code, ensuring the soundness and correctness of the optimizer is crucial. To achieve this, a comprehensive test suite is developed to:
-\begin{compactitem}
+\begin{description}
     \item \textbf{Verify Prolog Rules:} Test the Prolog rules to ensure they function correctly and identify all valid optimization opportunities without introducing errors.
     \item \textbf{Validate Fact Generation:} Confirm that the generated Prolog facts accurately represent the original IR graph, ensuring consistency and correctness.
     \item \textbf{Assess Integration:} Evaluate the integration of the Prolog-based optimizer with the GraalVM compiler, ensuring that the optimized code accurately reflects the original code and that no errors are introduced during the optimization process.
-\end{compactitem}
+\end{description}
 Additionally, GraalVM provides a robust suite of unit tests that will be leveraged during this testing phase. These existing tests will aid in validating the correctness of the optimization process and ensure that the Prolog-based optimizer integrates smoothly with GraalVM.
 
 \subsection{Evaluation}
 After validating the optimizer's correctness, performance must be evaluated and compared with existing methods to determine any improvements offered by Prolog-based optimizations. Additionally, it is important to assess whether the declarative syntax enhances documentation, comprehension, and maintenance of the optimizer.
-\begin{compactitem}
+\begin{description}
     \item \textbf{Performance Metrics:} Measure various performance metrics, including execution speed, resource utilization (e.g., memory and CPU), and optimization throughput. Compare these metrics with those of existing GraalVM optimization techniques to measure improvements or regressions. This comparison will help identify whether the Prolog-based optimizer provides tangible performance benefits or if it introduces any new challenges.
     \item \textbf{Potential New Optimizations:} Explore and document potential new optimization techniques that Prolog's declarative syntax might enable. This involves identifying unique optimization opportunities that may not be feasible with traditional imperative methods. By leveraging Prolog’s rule-based approach, we can uncover novel optimization strategies that could enhance the efficiency and effectiveness of the optimization process.
     \item \textbf{Strengths and Weaknesses:} Evaluate the Prolog-based optimizer and compare it to traditional approaches in terms of usability, including documentation clarity and the ease of adding new rules; maintenance, focusing on the ease of updates and code clarity; debugging and testing, assessing how effectively errors are identified and resolved; and scalability, ensuring the optimizer remains effective as codebases and optimization demands grow. This assessment will reveal the optimizer’s strengths and limitations relative to conventional methods.
-\end{compactitem}
+\end{description}
 
 \newpage
 
