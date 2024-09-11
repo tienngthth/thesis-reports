@@ -16,19 +16,19 @@ This project aims to evaluate the potential of integrating a Prolog-based optimi
 \subsection{Prolog-Based Optimization Framework}
 The Prolog-based optimization framework is composed of three key components. 
 
-\subsubsection{Prolog fact generator}
-Generate Prolog facts that accurately represent the IR graph of the program. This component will parse the IR and convert it into a Prolog-compatible format, allowing Prolog rules to operate on the program's structure. The approach involves traversing the IR graph and generating Prolog facts based on the graph's nodes and edges.
-
 \subsubsection{Prolog optimization rules}
-Express optimization rules as Prolog facts and predicates. This involves translating optimization concepts into Prolog syntax, ensuring that the rules are both expressive and applicable to the GraalVM compiler's IR. This translation process is critical for leveraging Prolog's capabilities in optimizing compiler IR.
+The first component of the project is the Prolog knowledge base, which includes all optimization expressions represented as Prolog predicates. This involves translating various optimization rules into Prolog specification. The initial focus will be on the canonicalization and conditional elimination phases, which are critical for standardizing the IR and removing redundant conditional expressions. As the project progresses, additional optimization phases will be explored and integrated into the component.
+\newpage
 \begin{description}
-    \item \textbf{Canonicalization Phase:} Begin with the canonicalization phase, which aims to standardize the IR code. This phase reduces the variety of IR forms by transforming them into a canonical format, thereby simplifying the optimization process for subsequent phases. By establishing a uniform representation, canonicalization facilitates more effective and efficient optimization in later stages.
-    \item \textbf{Conditional Elimination Phase:} Following canonicalization, the Conditional Elimination phase should be addressed. This phase focuses on removing redundant or unnecessary conditional expressions. This phase is a logical next step due to its relative simplicity and straightforward nature. It can effectively utilize the standardized forms resulting from the canonicalization phase. 
+    \item \textbf{Canonicalization Phase:} The first phase to be covered is the canonicalization phase, which aims to standardize the IR code. This phase reduces the variety of IR forms by transforming them into a canonical format, thereby simplifying the optimization process for subsequent phases. By establishing a uniform representation, canonicalization facilitates more effective and efficient optimization in later stages.
+    \item \textbf{Conditional Elimination Phase:} Following canonicalization, the Conditional Elimination phase should be addressed. This phase focuses on removing redundant or unnecessary conditional expressions. This phase is a logical next step due to its relative simplicity and straightforward nature. It can effectively utilize the standardized forms resulting from the canonicalization phase. Moreover, Prolog is well-suited for Conditional Elimination due to its powerful backtracking capability, which allows it to efficiently explore and verify various logical conditions to identify redundancies.
 \end{description}
-These two phases—canonicalization and conditional elimination—represent the initial focus of this project. Further optimization phases will be identified and analyzed as the project progresses over the course of the year.
+
+\subsubsection{Prolog fact generator}
+The second component generates Prolog facts that accurately represent the IR graph of the program. This component will parse the IR and convert it into a Prolog-compatible format, allowing Prolog rules to operate on the program's structure. The approach involves traversing the IR graph and generating Prolog facts based on the graph's nodes and edges.
 
 \subsubsection{Prolog-based optimizer}
-Recursively query Prolog optimization rules, execute Prolog queries, and apply transformations to the IR. This system should iteratively refine the program based on the query results. The component will be developed in Java and could potentially leverage the GNU Prolog for Java library to facilitate the execution of Prolog queries within the Java environment. 
+The Prolog-based optimizer is the final component of the framework. It recursively queries Prolog optimization rules, executes Prolog queries, and applies transformations to the IR. This system should iteratively refine the program based on the query results. The component will be developed in Java and could potentially leverage the GNU Prolog for Java library to facilitate the execution of Prolog queries within the Java environment. 
 
 To ensure compatibility between Prolog facts and rules, the development of the first two components will occur in parallel.
 
@@ -52,7 +52,6 @@ After validating the optimizer's correctness, performance must be evaluated and 
     \item \textbf{Strengths and Weaknesses:} Evaluate the Prolog-based optimizer and compare it to traditional approaches in terms of usability, including documentation clarity and the ease of adding new rules; maintenance, focusing on the ease of updates and code clarity; debugging and testing, assessing how effectively errors are identified and resolved; and scalability, ensuring the optimizer remains effective as codebases and optimization demands grow. This assessment will reveal the optimizer’s strengths and limitations relative to conventional methods.
 \end{description}
 
-\newpage
 
 \section{Timeline}
 The project timeline is divided into two parts: the first half (Semester 2, 2024) and the second half (Semester 1, 2025). The timeline is further divided into 4 phases: Project Proposal, Proof of Concept, Extension and Evaluation, and Report and Demonstration. The total duration of the project is 30 weeks, with a commitment of 10 working hours per week. The first half involves conducting research, writing the project proposal, and developing a proof of concept. The second half focuses on refining and expanding the project to encompass a comprehensive set of optimization rules, as well as preparing the final paper, report, and presentation. The timeline may be adjusted based on the results of the proof of concept phase to accommodate unforeseen challenges or to incorporate additional development needs.  The distribution of weeks per task is illustrated in the timeline graph below.

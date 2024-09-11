@@ -1,6 +1,7 @@
 \documentclass[instructions]{./Packages/uqthesis}
 \input{./Packages/LaTexPackages.tex}
 
+\footskip 30pt
 \title{Prolog Optimizations in GraalVM}
 \author{Thi Thuy Tien Nguyen}
 \currentdegrees{Master of Computer Science (Management)}
@@ -14,11 +15,12 @@
 \titlespacing{\section}{0pt}{8pt}{5pt}
 \titlespacing{\subsection}{0pt}{10pt}{5pt}
 \renewcommand{\contentsname}{\vspace{-50pt} \hfill\bfseries\LARGE TABLE OF CONTENTS \hfill \vspace{-10pt}}
-
+\renewcommand{\sectionmark}[1]{\markboth{\thesection~#1}{}}
 \begin{document}
-
 \frontmatter
 \maketitle
+\thispagestyle{empty}
+
 \clearpage
 
 \begin{KeepFromToc}
@@ -33,6 +35,7 @@
 \input{./Abstract/Abstract.tex}
 \input{./Introduction/Introduction.tex}
 \input{./Background/Background.tex}
+\input{./Background/Literature.tex}
 \input{./Plan/Plan.tex}
 
 \bibliographystyle{IEEEtran}
