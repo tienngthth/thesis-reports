@@ -1,0 +1,20 @@
+\subsection{addNode.pl}
+\begin{lstlisting}
+// 1 of 9 rules
+canonical(add(X,Y,Op), '(x - y) + y -> x'):-
+    X = node(IdSub,-,XSub,Y),
+    member(associative,Op).
+\end{lstlisting}
+\label{appendix:addNode.pl}
+    
+\subsection{conditionElimination.pl}
+\begin{lstlisting}
+// Entry  predicate
+process_if_nodes(NodeId, Result) :-
+    node(NodeId, if, _, _, _),
+    update_state(NodeId, DominatorId),
+    is_true_successor(NodeId, DominatorId, IsTrueSucc),
+    check_guard(NodeId, DominatorId, IsTrueSucc),
+    try_fold(NodeId, DominatorId, IsTrueSucc, Result).
+\end{lstlisting}
+\label{appendix:conditionElimination.pl}

@@ -1,0 +1,89 @@
+\subsection{Canonicalization: Add Node}
+\begin{table}
+    \centering
+    \fontsize{9pt}{9pt}
+    \begin{tabular}{|c|c|}
+        \hline
+        $Uncanonical$ & $Canonical$ \\
+        \hline
+        $x$ $+ \thicksim x$ & $-1$ \\
+        $\thicksim x + x$ & $-1$ \\
+        $-x + y$ & $y - x$ \\
+        $x + -y$ & $x - y$ \\
+        $x + 0$ & $x$ \\
+        $0 + x$ & $x$ \\
+        $(x - y) + y$ & $x$ \\
+        $x + (y - x)$ & $y$ \\
+        \hline
+    \end{tabular}
+    \caption{Canonicalization Rules for Add Node}
+    \label{table:addNodeRules}
+\end{table} 
+
+\begin{lstlisting}
+// 1 of 9 rules
+canonical(add(X,Y,Op), '(x - y) + y -> x'):-
+    X = node(IdSub,-,XSub,Y),
+    member(associative,Op).
+\end{lstlisting}
+
+\smallbreak
+This project has implemented 9 canonicalization rules for Add node which are shown in TABLE \ref{table:addNodeRules}. 
+An example of a Prolog rule for canonicalization is shown in the code snippet above. 
+
+\subsection{Conditional Elimination}
+\begin{lstlisting}
+// Case 1: X equals a constant
+if (x == 1) {
+    // this block is simplified to false
+    if (x == 2) {}
+}
+// Case: 2: X is larger than a constant
+if (x > 1) {
+    // this block is simplified to false
+    if (x == 0) {}
+}
+\end{lstlisting}
+
+The above code snippet demonstrates conditional elimination of nested if conditions that are handled in this project. In both cases, the inner if condition becomes unreachable and can be safely removed. 
+\begin{lstlisting}
+// Entry  predicate
+process_if_nodes(NodeId, Result) :-
+    node(NodeId, if, _, _, _),
+    update_state(NodeId, DominatorId),
+    is_true_successor(NodeId, DominatorId, IsTrueSucc),
+    check_guard(NodeId, DominatorId, IsTrueSucc),
+    try_fold(NodeId, DominatorId, IsTrueSucc, Result).
+\end{lstlisting}
+
+The entry predicate process_if_nodes/2 is responsible for processing if nodes, checking guard conditions, and determining if branches are unreachable.
+
+\subsection{Benchmarking}
+Integrating Prolog rules into the GraalVM optimizer leads to slower performance overall compared to the current Graal optimizer as shown in TABLE \ref{table:benchmark}. While the slowdown in canonicalization tests is relatively minor, with only slight performance differences, the conditional elimination tests show a significant decrease in throughput when using Prolog.
+
+\begin{table}[h]
+    \centering
+    \fontsize{9pt}{9pt}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        $Test$ & $With$ $Prolog$ & $Without$ $Prolog$ \\
+        \hline
+        $canonical1$ & $1052348 \pm 9217$ & $1050055 \pm 11484$ \\
+        \hline
+        $canonical2$ & $997088 \pm 9253$ & $1009246 \pm 10954$  \\
+        \hline
+        $canonical3$ & $767676 \pm 10135$ & $772046 \pm 15732$  \\
+        \hline
+        $condElim1$ & $560 \pm 9$ & $79171 \pm 583$ \\
+        \hline
+        $condElim2$ & $339 \pm 11$ & $37074 \pm 229$  \\
+        \hline
+    \end{tabular}
+    \caption{Benchmark Results for GraalVM Optimizations With and Without Prolog (Ops/Sec)}
+    \label{table:benchmark}
+\end{table} 
+
+
+
+
+
