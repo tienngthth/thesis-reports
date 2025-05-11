@@ -3,13 +3,13 @@
 \textit{1. Add Node Canonicalization}
 \smallbreak
 
-negateAdd: $\thicksim x + x \rightarrow -1,$ $x$ $+ \thicksim x \rightarrow -1$\\
+$\thicksim x + x \rightarrow -1,$ $x$ $+ \thicksim x \rightarrow -1$\\
 
-addNot: $-x + y \rightarrow y - x,$ $ x + -y \rightarrow x - y$\\
+$-x + y \rightarrow y - x,$ $ x + -y \rightarrow x - y$\\
 
-addNeutral: $x + 0 \rightarrow x,$ $ 0 + x \rightarrow x$\\
+$x + 0 \rightarrow x,$ $ 0 + x \rightarrow x$\\
 
-addSubNode: $(x - y) + y \rightarrow x,$ $ x + (y - x) \rightarrow y$\\
+$(x - y) + y \rightarrow x,$ $ x + (y - x) \rightarrow y$\\
 
 This project has implemented 8 canonicalization rules for Add node which are shown above.
 The Prolog rules for these canonicalization is simple and stateless, using a singleton Projog class. 
@@ -177,6 +177,12 @@ number ::= '-'? [0-9]+
     \caption{Benchmark Results for Add Node Canonicalization Tests (Operations/Sec)}
     \label{table:Canonicalization}
 \end{table} 
+\smallbreak
+
+\noindent  negateAdd:  $-y + x \rightarrow x - y$\\
+addNot: $\thicksim x + x \rightarrow -1$\\
+addNeutral: $0 + x \rightarrow x$\\
+addSubNode: $(x - y) + y \rightarrow x$\\
 
 \begin{table}[h]
     \centering
@@ -208,8 +214,6 @@ For example, in the negateAdd test, throughput drops from 2,242 ops/sec to 2,133
 Similarly, in the reassociation tests (Table \ref{table:Reassociation}), the slowdown is relatively small, with a drop from 304 ops/sec to 268 ops/sec in the subSub test and from 375 ops/sec to 339 ops/sec in the addAdd test.
 Overall, while there is some performance degradation, the impact of Prolog on both canonicalization and reassociation phases is not significant.
 
-
-
 \begin{table}[h]
     \centering
     \fontsize{9pt}{9pt}
@@ -217,14 +221,24 @@ Overall, while there is some performance degradation, the impact of Prolog on bo
         \hline
         $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ \\
         \hline
-        $condElim1$ & $517$ & $243$ \\
-        $condElim2$ & $951$ & $310$ \\
-        $condElim3$ & $1,386$ & $355$ \\
-        $condElim4$ & $1,661$ & $394$ \\
+        $condElim1$ & $1,661$ & $394$ \\
+        $condElim2$ & $1,386$ & $355$ \\
+        $condElim3$ & $951$ & $310$ \\
+        $condElim4$ & $517$ & $243$ \\
         \hline
     \end{tabular}
     \caption{Benchmark Results for Condtional Eliminiation Tests (Operations/Sec)}
     \label{table:condElimination}
 \end{table} 
+\smallbreak
 
-The results in Table \ref{table:condElimination} show a noticeable drop in optimization throughput when Prolog is used for conditional elimination. Across all test cases, the number of operations per second is significantly lower with Prolog. For example, condElim1 drops from 517 to 243 ops/sec, and condElim4 from 1,661 to 394 ops/sec. This suggests that while the Prolog-based approach is functionally correct, it currently introduces performance overhead, likely due to the cost of interfacing with the Prolog engine or the overhead of managing stateful logic in Prolog.
+\noindent condElim1: 2 nested ifs.\\
+condElim2: An outer if containing 2 child if statements, one of which contains a nested if.\\
+condElim3: An outer if containing 3 child if statements, one of which contains a nested if.\\
+condElim4: 8 nested ifs.\\
+
+The results in Table \ref{table:condElimination} show a noticeable drop in optimization throughput when Prolog is used for conditional elimination. 
+The number of operations per second is significantly lower with Prolog across all tests. 
+For example, condElim4 drops from 517 to 243 ops/sec, and condElim1 from 1,661 to 394 ops/sec.
+Moreover, the data indicates that performance degrades further as the nesting depth of if statements increases. 
+This suggests that while the Prolog-based approach is functionally correct, it currently introduces performance costs. This is likely due to the complexity of interfacing with the Prolog engine and the overhead associated with managing deeply nested, stateful logic.
