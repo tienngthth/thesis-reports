@@ -1,0 +1,157 @@
+\subsection{{Prolog Rules}}
+
+\textit{1. Add Node Canonicalization}
+\begin{align*}
+    x + (-y)          &\rightarrow x - y        &\qquad -x + y           &\rightarrow y - x \\
+    \sim x + x        &\rightarrow -1           &\qquad x + \sim x       &\rightarrow -1     \\
+    x + 0             &\rightarrow x            &\qquad 0 + x            &\rightarrow x      \\
+    (x - y) + y       &\rightarrow x            &\qquad x + (y - x)      &\rightarrow y
+\end{align*}
+    
+This project has implemented 8 canonicalization rules for the add node which are shown above.
+The Prolog rules for these canonicalization are simple and stateless, using a singleton Projog class. 
+The rules are loaded once and reused for each run. 
+An example of a Prolog rule for canonicalization is shown in the following code snippet. 
+
+\begin{lstlisting}
+% x + -y -> x - y
+canonical(node(addnode, X, node(IdNegate, negate, Y)), Result) :-
+    find_id(X, IdX),
+    find_id(Y, IdY),
+    Result = node(subnode, lookup(IdX), lookup(IdY)).
+\end{lstlisting}
+    
+This rule takes an IR node representing an addition operation and checks whether one of the operands is a negate node. 
+If this condition is met, it rewrites the addition as a subtraction operation and returns a new IR node term
+as the result which will be parsed and created by the result parser.
+
+\bigbreak
+\textit{2. And Node Canonicalization}
+\smallbreak
+
+$x$ $\&$ $y$ $\rightarrow y$ $\text{if} \thicksim mustSetX$ $\&$ $maySetY$ $== 0$\\
+
+$x$ $\&$ $y$ $\rightarrow x$ $\text{if} \thicksim mustSetY$ $\&$ $maySetX$ $== 0$\\
+
+This project has implemented 2 canonicalization rules for the and node which are shown above.
+These rules are also simple and stateless.
+However, they are more complex than the and node rules as they require checking the mustSet and maySet values of the operands.
+In compiler optimizations, mustSet and maySet are bitmasks used to describe known properties of an operand's bit values. mustSet indicates the bits that are definitely set (i.e., must be 1), while maySet indicates the bits that may be set (i.e., could be 1).
+
+
+\begin{lstlisting}
+% A stamp: stamp(lowerBound, upperBound, mustSet, maySet, bits)
+
+% x & y -> y if ~mustSetX & maySetY == 0
+canonical(node(andnode, X, Y, StampX, StampY), Result) :-
+    StampX = stamp(_, _, MustSetX, _, _),
+    StampY = stamp(_, _, _, MaySetY, _),
+    bitwise_not(MustSetX, ComplementMustSetX),
+    (ComplementMustBeSetX /\ MayBeSetY) = 0,
+    find_id(Y, IdY),
+    Result = lookup(IdY).
+\end{lstlisting}
+
+This rule takes in an \textsl{and node} with operands X and Y, along with their associated stamps. It checks if the bitwise AND of the complement of X's must-set bits and Y's may-set bits is zero. If so, it outputs a lookup to Y. lookup(IdY) will be parsed by the result parser to retrieve the corresponding node from the IR graph.
+
+\bigbreak
+\textit{3. Loop Invariant Reassociation}
+\begin{lstlisting}
+// Case 1 - Before
+for (int i = 0; i < 1000; i++) {
+    res = ((i + i) + rnd1) + rnd2;
+}
+// Case 1 - After
+for (int i = 0; i < 1000; i++) {
+    res = (i + i) + (rnd1 + rnd2);
+}
+
+// Case 2 - Before
+for (int i = 0; i < 1000; i++) {
+    res = ((i * rnd1) * i) * rnd2;
+}
+// Case 2 - After
+for (int i = 0; i < 1000; i++) {
+    res = i * i * (rnd1 * rnd2);
+}
+\end{lstlisting}
+
+The above code snippet demonstrates two cases of loop invariant reassociation handled in this project. 
+In both examples, invariant expressions are reassociated and grouped together to enable more efficient computation.
+Although not explicitly shown in the snippet, the invariant computation are hoisted outside the loop during IR graph construction, reducing redundant computation and improving performance.
+
+\begin{lstlisting}
+find_reassociate_inv(Node, LoopNodes, R) :-
+    node_type(Node, NodeType, X, Y),
+    find_reassociate(X, Y, Match1Id, Other1),
+    node_type(Other1, Other1Type, Other1X, Other1Y),
+    find_reassociate(Other1X, Other1Y, Match2Id, Other2),
+    find_id(Other1, Other1Id),
+    find_id(Other2, Other2Id),
+    (
+        % (other2 + match2) + match1 
+        % -> other2 + (match2 + match1)
+        NodeType == Other1Type == addnode
+            -> R = node(addnode, 
+                        lookup(Other2Id), 
+                        node(addnode, 
+                            lookup(Match1Id), 
+                            lookup(Match2Id)
+                        )
+                    );
+        ...
+    ).
+\end{lstlisting}
+The \texttt{find_reassociate_inv} rule takes as input a binary arithmetic node and the set of nodes that belong to a loop. Among its two operands, X and Y, the rule searches for a reassociation opportunity by traversing the dataflow graph upward from each operand. Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes. A candidate node for reassociation is expected to have two operands: one loop-invariant and one non-invariant. The rule then follows the non-invariant operand further to potentially identify a second non-invariant operand. It checks whether their combinations involve associative operators (such as addition or subtraction), analyzing the operators and their order to determine if the expression can be restructured. If so, it returns a transformed expression that groups the invariant computations together, enabling hoisting outside the loop.
+The rules for loop invariant reassociation are more complex than the canonicalization rules, however they are still stateless.
+
+\bigbreak
+\textit{4. Conditional Elimination}
+\smallbreak
+
+\begin{lstlisting}
+// Case 1: X equals a constant
+if (x == 1) {
+    // this block is simplified to false
+    if (x == 2) {}
+}
+// Case: 2: X is larger than a constant
+if (x > 1) {
+    // this block is simplified to false
+    if (x == 0) {}
+}
+\end{lstlisting}
+
+The above code snippet demonstrates two cases of conditional elimination of nested if statements handled in this project. In both cases, the inner if condition becomes unreachable and can be safely removed.
+The Prolog rules for conditional elimination are stateful and the most complex in this project. As the analysis traverses downward through the dominator tree, it creates stamps to track the known possible values of variables. When the traversal moves back up the tree, these variable states are retracted to maintain correctness. This stateful tracking enables accurate elimination of unreachable branches based on previously established conditions.
+
+\begin{lstlisting}
+// Entry  predicate
+process_if_nodes(NodeId, Result) :-
+    node(NodeId, if, _, _, _),
+    update_state(NodeId, DominatorId),
+    check_successor_type(NodeId, DominatorId, SuccType),
+    check_guard(NodeId, DominatorId, SuccType),
+    try_fold(NodeId, DominatorId, SuccType, Result).
+\end{lstlisting}
+
+The Prolog rule \texttt{process_if_nodes} follows a series of steps to handle conditional elimination. First, it identifies an if node. Second, the \texttt{update_state} predicate is invoked to find the dominator of the if node. This predicate also retracts any stale variable stamps associated with nodes lower in the dominator tree than the current node. Third, the rule checks if the node is a true or false successor of its dominator node using the \texttt{check_successor_type} predicate. Fourth, the \texttt{check_guard} predicate checks the condition of the dominator node and stores the variable stamps accordingly. Finally, the \texttt{try_fold} predicate evaluates the condition of the node and eliminates the condition if it is redundant based on existing variable stamps. This sequence of operations ensures that unreachable branches are identified and removed by maintaining a stateful representation of variable values across the dominator tree.
+
+\subsection{Generating Prolog Facts}
+To generate Prolog facts from the IR, each node in the IR is visited and formatted according to a new verbosity level: Verbosity.Prolog. Under this verbosity, each node is represented as a Prolog fact, following a standardized structure. For general nodes, the format is node(id, nodeType, ...args), while for control-flow nodes, it follows node(id, nodeType, ...args, nextNode), where nextNode represents the successor in the control flow. This uniform representation allows the IR to be emitted as structured Prolog facts for rule-based optimization and analysis.
+
+\subsection{Querying Prolog Rules and Parsing Results}
+The Prolog result parser is implemented using a recursive descent approach and currently supports parsing three types of terms: lookup terms, node terms, and constant expressions (boolean or numeric). A lookup term, written as lookup(number), instructs the interpreter to retrieve an existing node from the IR graph using its id. A node term, such as node(nodeType, args...), represents a new IR node to be created by the interpreter, with nodeType indicating the kind of operation (e.g., addnode, subnode, constantnode, etc.) and args as its operands. The parser also handles constant expressions, which can be either boolean values (true, false) or numeric literals. The grammar is defined as follows:
+\begin{lstlisting}
+term ::= lookupTerm | nodeTerm | constExp  
+constExp ::= booleanTerm | number  
+lookupTerm ::= "lookup" "(" number ")"  
+nodeTerm ::= 
+    "node" "(" nodeType "," args ")" | 
+    "node" "(" nodeType "," number ")"  
+args ::= term ("," term)*  
+nodeType ::= identifier
+identifier ::= [a-zA-Z_][a-zA-Z0-9_]*  
+booleanTerm ::= "true" | "false"  
+number ::= '-'? [0-9]+
+\end{lstlisting}
