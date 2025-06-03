@@ -102,7 +102,12 @@ find_reassociate_inv(Node, LoopNodes, R) :-
         ...
     ).
 \end{lstlisting}
-The \texttt{find_reassociate_inv} rule takes as input a binary arithmetic node and the set of nodes that belong to a loop. Among its two operands, X and Y, the rule searches for a reassociation opportunity by traversing the dataflow graph upward from each operand. Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes. A candidate node for reassociation is expected to have two operands: one loop-invariant and one non-invariant. The rule then follows the non-invariant operand further to potentially identify a second non-invariant operand. It checks whether their combinations involve associative operators (such as addition or subtraction), analyzing the operators and their order to determine if the expression can be restructured. If so, it returns a transformed expression that groups the invariant computations together, enabling hoisting outside the loop.
+The \texttt{find_reassociate_inv} rule takes as input a binary arithmetic node and the set of nodes that belong to a loop.
+Among its two operands, X and Y, the rule searches for a reassociation opportunity by traversing the dataflow graph upward from each operand. 
+Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes. 
+A candidate node for reassociation is expected to have two operands: one loop-invariant and one non-invariant. 
+The rule then follows the non-invariant operand further to potentially identify a second non-invariant operand. 
+It checks whether their combinations involve associative operators (such as addition or subtraction), analyzing the operators and their order to determine if the expression can be restructured. If so, it returns a transformed expression that groups the invariant computations together, enabling hoisting outside the loop.
 The rules for loop invariant reassociation are more complex than the canonicalization rules, however they are still stateless.
 
 \bigbreak

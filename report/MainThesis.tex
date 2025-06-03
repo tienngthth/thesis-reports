@@ -1,0 +1,70 @@
+\documentclass[instructions]{./Packages/uqthesis}
+\input{./Packages/LaTexPackages.tex}
+\usepackage{listings}
+\usepackage{xcolor} % for custom colors (optional)
+
+\lstset{
+  basicstyle=\ttfamily\small,        % typewriter font and smaller size
+  numbers=left,                      % line numbers on the left
+  numberstyle=\tiny\color{gray},     % style of line numbers
+  stepnumber=1,                      % number every line
+  numbersep=10pt,                    % distance between line numbers and code
+  showstringspaces=false,           % don't show spaces in strings
+  tabsize=2,                         % tab size
+  breaklines=true,                  % wrap long lines
+  frame=none,                     % put a frame around the code
+  language=Java                     % or another language if appropriate
+}
+\footskip 30pt
+\title{Prolog Optimizations in GraalVM}
+\author{Thi Thuy Tien Nguyen}
+\currentdegrees{Master of Computer Science (Management)}
+\orcid{\href{add your ORCID url here}{Candidate's ORCID}}
+\date{9 May 2025}
+\school{School of Electrical Engineering and Computer Science}
+\university{The University of Queensland}
+
+\titleformat{\chapter}{\LARGE\bfseries}{\thechapter}{1em}{\LARGE}
+\titlespacing{\chapter}{0pt}{-10pt}{5pt}
+\titlespacing{\section}{0pt}{8pt}{5pt}
+\titlespacing{\subsection}{0pt}{10pt}{5pt}
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\clearpage
+
+\input{./Letter/Letter.tex}
+\thispagestyle{empty}
+\clearpage
+
+\renewcommand{\sectionmark}[1]{\markboth{\thesection~#1}{}}
+
+\frontmatter
+\openany
+
+\begin{KeepFromToc}
+    \setcounter{page}{0} %reset the page counter
+    \tableofcontents
+    \newpage
+    \listoffigures
+    \newpage
+    \listoftables
+\end{KeepFromToc}
+  \let\cleardoublepage\clearpage
+
+\mainmatter
+
+\input{./Abstract/Abstract.tex}
+\input{./Introduction/Introduction.tex}
+\input{./Background/Background.tex}
+\input{./Background/Literature.tex}
+\input{./Implementation/Implementation.tex}
+\input{./Result/Result.tex}
+\input{./Discussion/Discussion.tex}
+\input{./Conclusion/Conclusion.tex}
+
+\bibliographystyle{IEEEtran}
+
+\bibliography{./References/Bibliography}
+
+\end{document}

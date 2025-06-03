@@ -1,0 +1,70 @@
+\section{IR to Prolog Translation}
+To enable logic-based optimization in GraalVM, the intermediate representation (IR) must first be translated into a form that a Prolog engine can understand. This involves converting each IR node into a Prolog-compatible term that captures its structure and semantics. These terms can then be used as inputs to Prolog rules for reasoning and optimization, or asserted into the knowledge base when needed.
+The representation is designed to be simple, uniform, and easy to parse. Each IR node is expressed as a term of the form \texttt{node(Id, Type, \ldots)}, where the first argument is a unique identifier for the node, and the second indicates its type (e.g., \texttt{add}, \texttt{if}, \texttt{constant}). The remaining arguments depend on the node type and encode operands, literal values, or successor relationships. This positional convention ensures that both data-flow and control-flow relationships are consistently represented and easily processed by Prolog.
+
+\subsection*{Binay Arithmetic Nodes}
+Binary arithmetic operations such as addition, subtraction, and similar computations are represented using the following structure:
+
+\begin{lstlisting}[language=Prolog]
+node(Id, Type, FirstOperandId, SecondOperandId)
+\end{lstlisting}
+
+Where:
+\begin{itemize}
+\item \texttt{Id}: Unique identifier for this node.
+\item \texttt{Type}:  Specifies the arithmetic operation being performed (e.g., \texttt{add}, \texttt{sub}).
+\item \texttt{FirstOperandId} and \texttt{SecondOperandId}: Identifiers of the nodes providing the operands.
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}[language=Prolog]
+node(1, add, 2, 3)
+\end{lstlisting}
+This defines an \texttt{AddNode} with ID \texttt{1}, which computes the sum of the results from nodes \texttt{2} and \texttt{3}.
+
+
+\subsection*{Control Flow Nodes}
+
+Control flow constructs, such as conditional branches, are represented as follows:
+
+\begin{lstlisting}[language=Prolog]
+node(Id, Type, ConditionId, TrueSuccessorId, FalseSuccessorId)
+\end{lstlisting}
+
+Where:
+\begin{itemize}
+  \item \texttt{Id}: Unique identifier for this control node.
+  \item \texttt{Type}: Specifies the control type (e.g., \texttt{if}, \texttt{while}).
+  \item \texttt{ConditionId}: Identifier of the node that evaluates the condition.
+  \item \texttt{TrueSuccessorId}: Node to proceed to if the condition is true.
+  \item \texttt{FalseSuccessorId}: Node to proceed to if the condition is false.
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}[language=Prolog]
+node(1, if, 2, 3, 4)
+\end{lstlisting}
+This defines an \texttt{IfNode} with ID \texttt{1}, which evaluates the condition from node \texttt{2}. If the condition is true, control flows to node \texttt{3}; otherwise, it flows to node \texttt{4}.
+
+\bigskip
+
+The translation process is implemented by extending the \texttt{toString} method of each IR node class to support a new verbosity level: \texttt{Verbosity.Prolog}. When this verbosity level is selected, each node formats itself as a Prolog-compatible term that reflects its internal structure and relationships. This approach leverages GraalVM's existing verbosity mechanism, which allows nodes to produce different string representations depending on the context.
+By introducing the \texttt{Prolog} verbosity level, IR nodes can emit a consistent, structured representation that is suitable for use as input to Prolog rules or for assertion into the logic engine. The following code snippet illustrates how the \texttt{toString} method of the \texttt{IfNode} class was extended to support this additional verbosity level:
+
+\begin{lstlisting}[language=Java]
+@Override
+public String toString(Verbosity verbosity) {
+    if (verbosity == Verbosity.Prolog) {
+        return "node(" + String.join(
+                ",",
+                toString(Verbosity.Id),
+                toString(Verbosity.Name).toLowerCase(),
+                condition.toString(Verbosity.Id),
+                trueSuccessor.toString(Verbosity.Id),
+                falseSuccessor.toString(Verbosity.Id)
+        ) + ")";
+    } else {
+        return super.toString(verbosity);
+    }
+}
+\end{lstlisting}

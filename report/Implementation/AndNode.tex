@@ -1,0 +1,53 @@
+\lstset{
+    aboveskip=0pt,
+    belowskip=0pt
+}
+\subsection{And Node Canonicalization}
+\subsection*{Use cases}
+This project has implemented two canonicalization rules for the \texttt{AndNode} as shown below.
+\begin{align*}
+    x \,\&\, y &\rightarrow y \quad \text{if } \sim \texttt{mustSetX} \,\&\, \texttt{maySetY} = 0 \\
+    x \,\&\, y &\rightarrow x \quad \text{if } \sim \texttt{mustSetY} \,\&\, \texttt{maySetX} = 0
+\end{align*}
+
+These rules, while still stateless and pattern-based, are slightly more involved than typical structural rules because they depend on semantic properties of the operands. Specifically, they require inspecting the \texttt{mustSet} and \texttt{maySet} bitmasks associated with the operands. In the context of compiler optimizations, \texttt{mustSet} and \texttt{maySet} are abstract representations of known and possible values at the bit level. The \texttt{mustSet} bitmask identifies bits that are guaranteed to be 1 in the operand, while the \texttt{maySet} bitmask identifies bits that could potentially be 1. These bitmasks enable reasoning about the outcome of bitwise operations without knowing exact operand values at compile time.
+These rules help reduce redundant operations and enable further simplifications by eliminating unnecessary bitwise computations when the operand properties make them semantically redundant.
+
+\subsection*{Prolog Implementation}
+\begin{lstlisting}[language=Prolog]
+% Complement of a bitmask
+bitwise_not(X, Result) :-
+    Mask is (1 << 32) - 1,
+    Result is X xor Mask.
+
+% x & y -> y if ~mustBeSetX & mayBeSetY == 0
+canonical(node(andnode, X, Y, StampX, StampY), Result) :-
+    StampX = stamp(_, _, MustBeSetX, _,),
+    StampY = stamp(_, _, _, MayBeSetY),
+    bitwise_not(MustBeSetX, ComplementMustBeSetX),
+    (ComplementMustBeSetX /\ MayBeSetY) = 0,
+    find_id(Y, IdY),
+    Result = lookup(IdY).
+\end{lstlisting}
+This rule matches an \texttt{andnode} where the bitwise AND operation can potentially be simplified based on the bitmask metadata of its operands. 
+It takes as input an \texttt{andnode} term consisting of two operand nodes along with their associated \texttt{stamp} information. 
+Each \texttt{stamp} contains four pieces of data: minimum value that the node could have, maximum value that the node could have, \texttt{mustBeSet} bits, and \texttt{mayBeSet} bits. 
+For this rule, only the \texttt{mustBeSet} and \texttt{mayBeSet} fields are relevant. 
+The rule computes the bitwise complement of the first operand’s \texttt{mustBeSet} bits and then performs a bitwise AND with the second operand’s \texttt{mayBeSet} bits. 
+If this result is zero, it indicates that the original AND operation can be simplified to just the second operand. 
+The rule then extracts the unique identifier of this operand and returns it as the simplified result. 
+The bitwise complement operation is implemented using a helper predicate \texttt{bitwise\_not} because the Projog engine does not provide a built-in predicate for this operation. 
+This method leverages precise bit-level information to safely optimize the code.
+A similar predicate is used to handle the complementary case where x is returned instead of y.
+\subsection*{Java Implementation Comparision}
+\begin{lstlisting}[language=Java]
+IntegerStamp xStamp = (IntegerStamp) rawXStamp;
+IntegerStamp yStamp = (IntegerStamp) rawYStamp;
+if (((~xStamp.mustBeSet()) & yStamp.mayBeSet()) == 0) {
+    return forY;
+} else if (((~yStamp.mustBeSet()) & xStamp.mayBeSet()) == 0) {
+    return forX;
+}
+\end{lstlisting}
+The code snippet above provides the Java implementation for canonicalization rules.
+Both the Java and Prolog versions implement the same underlying logic for the canonicalization of the bitwise AND operation, but they reflect their respective language paradigms in different ways. The Java code uses a single if-else statement to handle complementary cases within one procedural block, making the control flow explicit and linear. Meanwhile, the Prolog version expresses these cases as separate predicates, each capturing a specific rule declaratively. This separation aligns with Prolog’s logical programming style, allowing each case to be reasoned about independently. While the Prolog code is somewhat longer, it offers clarity through modular rules. Both approaches have similar control flow, but the expression differs to suit the strengths of each language.

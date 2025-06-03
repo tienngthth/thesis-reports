@@ -1,0 +1,166 @@
+\subsection{Conditional Eliminationtion}
+\subsection*{Use cases}
+This project has implemented rules to match a variety of condtional elimination cases, examples of which are shown below.
+\smallbreak
+
+\begin{lstlisting}
+// Case 1: X equals a constant
+if (x == 1) {
+    // this block is simplified to false
+    if (x == 2) {}
+}
+// Case: 2: X is larger than a constant
+if (x > 1) {
+    // this block is simplified to false
+    if (x == 0) {}
+}
+\end{lstlisting}
+
+The Prolog rules for conditional elimination represent the most stateful and structurally complex analysis in this project. Unlike previous optimizations, which are generally stateless and operate locally on individual nodes, conditional elimination must track and manage global control flow context throughout the analysis. The underlying intermediate representation graph is structured according to a dominator tree, which describes which nodes dominate others in the control flow. However, this tree does not provide a direct parent and child relationship that is easily accessible. Therefore, the analysis cannot rely solely on static relationships; it must dynamically assert and retract facts that describe current conditions and known variable states as it traverses the dominator tree.
+
+A central concept in this analysis is the stamp. A stamp represents the known value range of a variable at a certain point in the control flow, typically recorded as a lower and upper bound. In addition to the bounds, each stamp also records the identifier of the node where the value range was derived. This allows the analysis to later determine the scope of that information and retract it when it becomes invalid. Stamps are inferred from control flow conditions. For example, if the analysis encounters a branch that only executes when the variable x is less than five, it can assert a stamp recording that the value of x must be less than five on that path, and that this constraint originates from the current conditional node. These known ranges are later used to simplify or eliminate subsequent conditional expressions, allowing the system to reason more effectively about the program’s behavior.
+
+Because the analysis moves down through the dominator tree and later back up, the state must be carefully managed. When descending into a node, new stamps may be asserted to reflect updated knowledge about variable values. However, when the traversal moves upward again, those stamps must be retracted to avoid applying invalid assumptions to unrelated parts of the graph. This stateful approach ensures that the analysis remains sound and accurate, while still enabling powerful optimizations such as the elimination of unreachable branches and the simplification of guarded conditions.
+
+\subsection*{Prolog Implementation}
+\begin{lstlisting}[language=Prolog]
+// Entry predicate for processing if nodes
+process_if_nodes(Node, Result) :-
+    node(NodeId, if, _, _, _),
+    update_state(NodeId, DominatorId),
+    check_successor_type(NodeId, DominatorId, SuccType),
+    check_guard(NodeId, DominatorId, SuccType),
+    try_fold(NodeId, DominatorId, SuccType, Result),
+    Node = lookup(NodeId).
+\end{lstlisting}
+
+The predicate \texttt{process\_if\_nodes/2} identifies and processes all nodes in the knowledge base that represent conditional branches, i.e., nodes of type \texttt{if}. It does not take a specific input node but instead searches through the facts to find nodes matching the pattern \texttt{node(NodeId, if, \_, \_, \_)}.
+For each such node, it updates the analysis state by determining the dominator node via \texttt{update\_state/2}, which finds the controlling predecessor in the control flow graph. It then examines the type of successor nodes related to this dominator using \texttt{check\_successor\_type/3}, and inspects the guarding conditions with \texttt{check\_guard/3}. Based on these checks, \texttt{try\_fold/4} attempts to simplify or fold the conditional node.  When \texttt{process\_if\_nodes/2} is queried, it systematically returns pairs of \texttt{NodeId} and \texttt{Result}, such as \texttt{(NodeId = 1, Result=node(boolean, false))}, reflecting the outcome of attempting to optimize each conditional branch.
+
+\smallbreak
+\begin{lstlisting}[language=Prolog]
+% Predicate to find dominator of a block
+find_dominator(NodeId, DominatorId) :-
+    block(_, _, NodeId, DominatorBlockId),
+    block(DominatorBlockId, _, DominatorId, _).
+
+% Update child node level
+update_child_level(ParentNodeId, ChildNodeId) :-
+    level(ParentNodeId, Level),
+    NewLevel is Level + 1,
+    asserta_unique(level(ChildNodeId, NewLevel)).
+
+% Update global state
+update_state(NodeId, DominatorId) :-
+    find_dominator(NodeId, DominatorId) ->
+    (
+        % Update node level and retract stale stamp
+        update_child_level(DominatorId, NodeId),
+        retract_stale_stamps(NodeId)
+    );
+    % First if node doesn't have a dominator
+    asserta_unique(level(NodeId, 0)),
+    fail.
+\end{lstlisting}
+\smallbreak
+When visiting a new node, the \texttt{update\_state/2} coordinates process to find the node dominator, its level in the tree and retract stale stamps. First, it attempts to find its dominator. 
+The predicate \texttt{find\_dominator/2} finds the immediate dominator of a node by looking up the block information: it first finds the block containing the \texttt{NodeId} and retrieves its dominator block, then finds the node corresponding to that dominator block, returning its identifier as \texttt{DominatorId}. 
+Once the dominator is found, \texttt{update\_child\_level/2} updates the child node’s level relative to its parent by fetching the parent’s current level, incrementing it by one, and recording this new level for the child node using \texttt{asserta\_unique/1}. 
+If no dominator is found (such as for the root or first \texttt{if} node), it assigns level zero to the node and returns failure. 
+This mechanism tracks the depth of nodes in the dominator tree or control flow hierarchy, which is critical for later analysis or optimizations.
+\smallbreak
+\begin{lstlisting}[language=Prolog]
+% Predicate to find the maximum value of levels
+find_max_level(MaxLevel) :-
+    findall(Level, level(_, Level), Levels),
+    max_list(Levels, MaxLevel).
+
+% Retract all stamps that are guarded by the lower node level
+retract_stale_stamps(NodeId) :-
+    level(NodeId, MinLevel),
+    find_max_level(MaxLevel),
+    findall(Num, between(MinLevel, MaxLevel, Num), StaleLevels),
+    retract_stamps(StaleLevels).
+retract_stamps([]).
+retract_stamps([Level|Rest]) :-
+    retractall(stamp(_, _, _, Level)),
+    retract_stamps(Rest).
+\end{lstlisting}
+
+\smallbreak
+To ensure consistency in the analysis, stale or outdated information about nodes lower in the dominator tree must be removed when visiting a new node. The predicate \texttt{retract\_stale\_stamps/1} achieves this by first determining the level of the current node, then finding the maximum node level recorded so far. It collects all levels between the current node’s level and the maximum and retracts all corresponding \texttt{stamp/4} facts for those levels, effectively clearing cached data that may no longer be valid due to new information higher in the tree.
+
+\smallbreak
+
+\begin{lstlisting}[language=Prolog]
+% Predicate to check if a node is a true successor or a false successor of a given node
+check_successor_type(NodeId, DominatorId, Result) :-
+    node(DominatorId, if, TrueSucc, FalseSucc, _),
+    node(TrueSucc, begin, NodeId) -> Result = true;
+    node(FalseSucc, begin, NodeId) -> Result = false;
+    Result = unknown.
+\end{lstlisting}
+
+\newpage
+The above Prolog predicate \texttt{check\_successor\_type/3} determines whether a given \texttt{NodeId} is a true successor, a false successor, or neither (unknown) with respect to an \texttt{if} node identified by \texttt{DominatorId}. It starts by retrieving the \texttt{if} node corresponding to \texttt{DominatorId}, which has two successor nodes: \texttt{TrueSucc} and \texttt{FalseSucc}. Then it checks if the given \texttt{NodeId} matches the beginning node of the true branch (\texttt{TrueSucc}); if so, it binds \texttt{Result} to \texttt{true}. Otherwise, it checks if \texttt{NodeId} matches the beginning node of the false branch (\texttt{FalseSucc}); if so, it binds \texttt{Result} to \texttt{false}. If neither condition holds, it assigns \texttt{Result} to \texttt{unknown}.
+
+\smallbreak
+\begin{lstlisting}[language=Prolog]
+check_guard(DomOp, IdX, DomValueY, SuccType, NodeId) :-
+    % Do nothing if dominator value is null
+    DomValueY == null -> true;
+    (
+        level(NodeId, GuardId),
+        member(DomOp,['==']), SuccType == true
+            -> asserta_unique(stamp(IdX, DomValueY, DomValueY, GuardId));
+        member(DomOp,['<']), SuccType == false
+            -> asserta_unique(stamp(IdX, DomValueY, max_int, GuardId));
+        true
+    ).
+
+% check case both conditions are binary conditions,
+% have the same node x, and y of the dominator condition is a constant
+check_guard(NodeId, DominatorId, SuccType) :-
+    node(NodeId, if, _, _, ConditionId),
+    node(ConditionId, _, IdX, _),
+    node(IdX, parameter(_)),
+    node(DominatorId, if, _, _, DominatorConditionId),
+    node(DominatorConditionId, DominatorOp, IdX, DominatorY),
+    node(DominatorY, constant(DominatorYValue, _)),
+    check_guard(DominatorOp, IdX, DominatorYValue, SuccType, NodeId).
+\end{lstlisting}
+\smallbreak
+The above Prolog code is designed to recognize and remember useful information from conditional checks in earlier parts of a program’s control flow, which can later help optimize the program. The first predicate, \texttt{check\_guard/3}, operates at a higher level by examining the current node’s condition and its dominator’s condition. It ensures both conditions relate to the same variable with identifier \texttt{IdX} and that the dominator’s condition compares that variable to a constant. If these checks pass, it calls \texttt{check\_guard/5} to attempt recording a \texttt{stamp} representing the possible known variable values.
+The second predicate, \texttt{check\_guard/5}, takes the comparison operator from the dominator node, the variable’s identifier \texttt{IdX}, the constant value \texttt{DomValueY} from the dominator node, the type of successor branch (true or false), and the current node \texttt{NodeId}. It first skips processing if the dominator value is missing. Otherwise, it retrieves the node’s level in the control flow and, based on the operator and successor type, records a \texttt{stamp} fact. For example, if the operator is equality and the branch is true, it records that the variable equals the constant. If the operator is less-than and the branch is false, it records that the variable is at least the constant value. This \texttt{stamp} acts as a fact that the system can later use to simplify expressions or optimize code.
+
+\smallbreak
+\begin{lstlisting}[language=Prolog]
+% Constant condition: value stamp available and deterministic
+try_fold('>=', ValueY, MinX, MaxX, true) :- 
+    ValueY \= null, MinX == MaxX, MinX >= ValueY.
+try_fold('>=', ValueY, MinX, MaxX, false) :- 
+    ValueY \= null, MinX == MaxX, MinX < ValueY.
+...
+try_fold(_, ValueY, _, _, unknown) :- ValueY \= null.
+try_fold(_, ValueY, _, _, unknown) :- ValueY == null.
+try_fold(_, _, _, _, unknown).  % General fallback
+
+% try fold the condition
+try_fold(NodeId, DominatorId, SuccType, Result) :-
+    node(NodeId, if, _, _, ConditionId),
+    node(DominatorId, if, _, _, DominatorConditionId),
+    node(ConditionId, Op, IdX, IdY),
+    node(DominatorConditionId, DominatorOp, IdX, DominatorY),
+    node(IdX, parameter(_)),
+    node(IdY, constant(ValueY, _)),
+    node(DominatorY, constant(DominatorYValue, _)),
+    (
+        stamp(IdX, MinX, MaxX, _) ->
+            try_fold(Op, ValueY, MinX, MaxX, Result);
+    ).
+\end{lstlisting}
+\smallbreak
+The above Prolog code attempts to simplify or “fold” conditional expressions by using known constant value ranges to decide the truth of conditions. The predicate \texttt{try\_fold/4} serves as the entry point: it extracts the operator and operands from the current conditional node and its dominator node, ensuring both involve the same variable \texttt{IdX} and that the compared values are constants. It then looks up any known value range for \texttt{IdX} stored as a \texttt{stamp}. If such a range exists, \texttt{try\_fold/4} calls the more specific \texttt{try\_fold/5} predicate to attempt to evaluate the condition conclusively as \texttt{true}, \texttt{false}, or \texttt{unknown}. \texttt{try\_fold/5}, defines specific cases for different operators such as \texttt{'>='}. For example, if the operator is \texttt{'>='}, the constant \texttt{ValueY} is not null, and the known value range for the variable is a single value (\texttt{MinX} equals \texttt{MaxX}), then it returns \texttt{true} if that value satisfies the condition or \texttt{false} otherwise. Other operators have similar specialized rules. If none of these match, the predicate defaults to \texttt{unknown}, indicating the condition cannot be conclusively evaluated.
+
+\subsection*{Java Implementation Comparision}
+Both the Prolog and Java implementations of conditional elimination are inherently complex due to the nature of the analysis, involving intricate state tracking and control flow reasoning. The Java version typically spans multiple classes and methods, spreading the logic across different parts of the codebase, which can make following the overall flow challenging without jumping between files. In contrast, the Prolog implementation, while lengthy, expresses the logic declaratively within a set of predicates, making the reasoning about pattern matching and rule application more direct. However, Prolog’s declarative style may require understanding predicate dependencies and backtracking, which can be less intuitive for those unfamiliar with logic programming. Overall, both versions balance complexity differently: Java through imperative, object-oriented constructs with explicit state management, and Prolog through concise logical rules with implicit control flow.

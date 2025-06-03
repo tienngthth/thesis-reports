@@ -1,0 +1,108 @@
+%*************************************
+% UQ Thesis Title Page Formatting Package
+%*************************************
+\ProvidesPackage{./Packages/uqtitle}[2018/03/19 v.01 UQ thesis title template]
+\RequirePackage{graphicx}
+%This package formats the front matter for theses at
+%The University of Queensland.
+%Based on https://en.wikibooks.org/wiki/LaTeX/Title_Creation
+
+%*************************************
+% Define new 'storing' commands and set defaults.
+%*************************************
+%Current degree.
+\newcommand*{\currentdegrees}[1]{\gdef\@currentdegrees{#1}}
+\newcommand*{\@currentdegrees}{Specify your current degrees}
+
+%Degree you are submitting for.
+\newcommand*{\submittedfor}[1]{\gdef\@submittedfor{#1}}
+\newcommand*{\@submittedfor}{Specify degree you are submitting for}
+
+%School you are submitting under.
+\newcommand*{\school}[1]{\gdef\@school{#1}}
+\newcommand*{\@school}{School of Hard Knocks}
+
+%Univeristy name.
+\newcommand*{\university}[1]{\gdef\@university{#1}}
+\newcommand*{\@university}{The University of Queensland}
+
+%Your ORCID
+\newcommand*{\orcid}[1]{\gdef\@orcid{#1}}
+\newcommand*{\@orcid}{Your orcid}
+
+%Renew the maketitle command.
+\renewcommand*{\maketitle}{%
+
+%*************************************
+% Title Page layout
+%*************************************
+\pagestyle{fancy}
+%Suppress the header.
+\rmfamily					
+%Make sure we have Roman font family.
+
+%Include the university shield.
+%CHANGE TO EPS IF REQUIRED.
+\noindent
+\vfill
+\begin{center}
+	\includegraphics[width=.65\textwidth]{Packages/UQLogo}
+\end{center}
+
+\vspace{40 pt}
+
+\begin{center}
+    \Huge
+	{\bfseries \thetitle} \\
+\end{center}
+
+\vspace{10 pt}
+
+\begin{center}
+	by \\
+	\Large
+    \theauthor
+\end{center}
+
+\vspace{30 pt}
+
+\def\orcidlink{
+	\begin{center}
+		 \\
+		
+	\end{center}
+}
+
+\begin{center}
+	Supervisors \\
+	\Large
+    Mr Brae J. Webb 
+	\includegraphics[width=.02\textwidth]{Packages/OrcidLogo} 
+	\orcid{0000-0003-3579-0244}, 
+	Prof Mark Utting
+	\includegraphics[width=.02\textwidth]{Packages/OrcidLogo} 
+	\orcid{0000-0003-3134-6306}, 
+	Prof Ian J. Hayes
+	\includegraphics[width=.02\textwidth]{Packages/OrcidLogo} 
+	\orcid{0000-0003-3649-392X}
+\end{center}
+
+\vspace{50 pt}
+
+\begin{center}
+	\Large
+	\@school{}, \\
+	\@university{}.
+\end{center}
+
+\vspace{50 pt}
+
+\begin{center}
+    \Large
+	\@date{}
+\end{center}
+
+\setlength{\parskip}{5pt}
+\setlength\parindent{0pt}
+
+}

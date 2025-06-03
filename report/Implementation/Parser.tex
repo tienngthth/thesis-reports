@@ -1,0 +1,99 @@
+\section{Query Result Parser}
+A critical part of integrating Prolog-based optimization into the GraalVM compilation pipeline is interpreting the results of Prolog queries in a way that can be applied back to the compiler’s intermediate representation (IR). This task is handled by a custom Prolog result parser, which translates the Prolog engine’s output terms into corresponding GraalVM IR node constructions. The parser is implemented using a recursive descent approach and is designed to be modular, extensible, and robust to varying term structures. After optimization opportunities are identified through Prolog queries, the results returned by the logic engine must be interpreted as transformations to be applied to the IR graph. These transformations can include the reuse of existing nodes or the creation of new computation nodes. To support this, the parser must handle a structured grammar of Prolog terms that describe IR transformations. The design emphasizes clarity and extensibility, allowing new node types or term patterns to be added as the optimization logic evolves.
+
+\subsection{Supported Term Types}
+
+The parser currently supports two main categories of Prolog terms: lookup terms and node terms.
+Each of these is parsed into a distinct internal representation that maps to an IR node construction or modification.
+
+\begin{description}
+    \item[Lookup Terms:] A lookup term allows the Prolog engine to refer to an existing node in the IR graph by its identifier. This supports reusing nodes in the optimization result rather than duplicating them. For example, \texttt{lookup(42)} instructs the parser to retrieve the IR node with ID \texttt{42} from the existing graph and use it as part of the resulting computation.
+    \item[Node Terms:] A node term is used to represent the creation of a new IR node, such as arithmetic or constant node. Each term specifies a node type followed by one or more arguments, which can themselves be terms (allowing for recursive nesting). For instance, an addition node that sums two constants might be represented as: \texttt{node(addnode, node(constantnode, 1), node(constantnode, 2))}. This term defines an \texttt{AddNode} with two operand nodes created from constant values \texttt{1} and \texttt{2}.
+\end{description}
+
+\subsection{Grammar Specification}
+
+The Prolog terms parsed by this component follow a well-defined recursive grammar. The grammar is shown below using a variant of Extended Backus-Naur Form (EBNF):
+
+\begin{lstlisting}[basicstyle=\ttfamily]
+term        ::= lookupTerm | nodeTerm  
+lookupTerm  ::= "lookup" "(" number ")"  
+nodeTerm    ::= 
+    "node" "(" nodeType "," args ")" | 
+    "node" "(" nodeType "," constExp ")"  
+args        ::= term ("," term)*  
+nodeType    ::= identifier  
+identifier  ::= [a-zA-Z_][a-zA-Z0-9_]* 
+constExp    ::= booleanTerm | number
+booleanTerm ::= "true" | "false"  
+number      ::= '-'? [0-9]+
+\end{lstlisting}
+
+This grammar supports recursive composition, allowing complex IR structures to be described using nested terms. For example, a \texttt{nodeTerm} can take other \texttt{nodeTerms} or \texttt{lookupTerms} as arguments, enabling the construction of complete subgraphs within a single expression. 
+The top-level rule \texttt{term} covers all supported input formats: \texttt{lookupTerm} refers to an existing IR node by ID and \texttt{nodeTerm} defines a new node with a specific type and arguments. The \texttt{args} rule enables a comma-separated list of nested terms, making the grammar flexible enough to capture deep IR trees.
+This grammar ensures a clean separation between symbolic IR node construction and raw value references, which is critical for correctly interpreting the semantics of Prolog query results.
+
+\subsection{Recursive Descent Parsing}
+
+The parser is implemented as a recursive descent parser, where each non-terminal rule in the grammar corresponds to a function in the code. For example:
+
+\begin{itemize}
+    \item \texttt{parseTerm()} dispatches to \texttt{parseLookup()} or \texttt{parseNode()} based on the parsed identifier (\texttt{lookup} or \texttt{node}).
+    \item \texttt{parseLookup()} parses a \texttt{lookupTerm} of the form \texttt{lookup(number)}.
+    \item \texttt{parseNode()} parses a \texttt{nodeTerm}, handling both cases where the second argument is either a \texttt{constExp} or a list of nested terms.
+    \item \texttt{parseArgs()} handles an arbitrary-length comma-separated list of \texttt{term}s, recursively parsing each argument.
+    \item \texttt{parseConstExp()} parses constant expressions, which are either boolean literals (\texttt{true}, \texttt{false}) or numeric literals.
+\end{itemize}
+
+This structure makes the parser naturally align with the grammar, making it easier to maintain and extend.
+
+\subsection{IR Reconstruction}
+
+Once the Prolog result parser has constructed an internal representation of the parsed terms, these must be converted into actual GraalVM IR nodes. This is accomplished using the \emph{visitor pattern}, a design approach that allows each parsed node type to define how it should be transformed into the corresponding IR node.
+Each parsed node class implements a \texttt{visit} method tailored to its specific node type. The visitor traverses the parsed term tree recursively, invoking the appropriate visit methods to construct the IR nodes. This pattern cleanly separates the parsing logic from IR construction, supporting easy extensibility when adding new node types.
+For example, the visitor method for an addition node might look like this:
+\smallbreak
+\begin{lstlisting}[language=Java]
+@Override
+public ValueNode visitAddNode(ExpNode.AddNode node) {
+    // Recursively evaluate the left and right operands
+    ValueNode left = node.left.evaluate(this);
+    ValueNode right = node.right.evaluate(this);
+    // Create a GraalVM AddNode from the evaluated operands
+    return BinaryArithmeticNode.add(left, right);
+}
+\end{lstlisting}
+
+Here, \texttt{visitAddNode} recursively evaluates its child nodes by calling \texttt{evaluate} on each, which triggers the visitor on those subnodes. After obtaining the operand IR nodes, it constructs a new GraalVM \texttt{AddNode} representing the addition operation.
+This recursive descent through the parsed term tree ensures that the full IR subtree corresponding to the Prolog query result is reconstructed accurately. The visitor pattern also facilitates modularity by encapsulating node-specific IR creation logic within each visit method, making the parser both robust and extensible.
+
+\subsection{Example Use Case}
+The following node representation describes an \texttt{AddNode} where the first operand is the existing IR node with ID \texttt{3}, and the second operand is a multiplication of a constant \texttt{2} with another existing node with ID \texttt{5}.
+\newpage
+\begin{lstlisting}[language=Prolog]
+node(
+    addnode,
+    lookup(3),
+    node(mulnode,node(constantnode,2),lookup(5))
+)
+\end{lstlisting}
+
+The parsing and interpretation process proceeds as follows:
+
+\begin{enumerate}
+    \item The parser identifies the outer \texttt{node(addnode, ...)} term, representing an addition node.
+    \item It encounters \texttt{lookup(3)}, which instructs the parser to retrieve the existing IR node with ID \texttt{3} from the current graph.
+    \item The parser then processes the inner \texttt{node(mulnode, ...)} term recursively. This involves:
+    \begin{itemize}
+        \item Creating a \texttt{constantnode} with the numeric value \texttt{2}.
+        \item Retrieving the existing IR node referenced by \texttt{lookup(5)}.
+        \item Constructing a \texttt{MulNode} from the constant node and the looked-up node.
+    \end{itemize}
+    \item After fully parsing the term tree, the corresponding GraalVM IR nodes are constructed using the visitor pattern:
+    \begin{itemize}
+        \item The visitor’s \texttt{visitAddNode} method is called with the parsed \texttt{AddNode} term.
+        \item It recursively evaluates its operands by invoking \texttt{evaluate} on the left child (the looked-up node with ID 3) and the right child (the constructed \texttt{MulNode} subtree).
+        \item The \texttt{MulNode} subtree is itself created by the visitor through its \texttt{visitMulNode} method, which similarly evaluates its operands.
+        \item Finally, the visitor assembles these evaluated child nodes into a new \texttt{AddNode} instance that reflects the optimized IR subtree.
+    \end{itemize}
+\end{enumerate}

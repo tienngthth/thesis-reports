@@ -1,0 +1,12 @@
+\section{Prolog Optimization Rules}
+Each optimization in this framework is defined in a dedicated Prolog file named after the transformation it performs, such as \texttt{addNode.pl}.
+These files contain the logic rules that describe how specific intermediate representation (IR) patterns should be recognized and transformed during compilation.
+Stateless optimizations such as canonicalization and loop invariant reassociation are purely pattern based.
+They operate by matching structural patterns in the IR and returning transformed results without modifying the knowledge base.
+In contrast, stateful optimizations such as conditional elimination require tracking intermediate state during query execution.
+These optimizations use Prolog’s dynamic capabilities, including fact assertion and retraction, to simulate data flow and propagate information such as possible kwown variable values for conditional elimination optimization.
+
+\input{Implementation/AddNodes.tex}
+\input{Implementation/AndNode.tex}
+\input{Implementation/Loop.tex}
+\input{Implementation/Condition.tex}

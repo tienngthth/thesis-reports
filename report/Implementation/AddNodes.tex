@@ -1,0 +1,58 @@
+\subsection{Add Node Canonicalization}
+\subsection*{Use cases}
+This project has implemented eight canonicalization rules for the \texttt{AddNode} as shown below.
+\begin{align*}
+    x + (-y)          &\rightarrow x - y        &\qquad -x + y           &\rightarrow y - x \\
+    \sim x + x        &\rightarrow -1           &\qquad x + \sim x       &\rightarrow -1     \\
+    x + 0             &\rightarrow x            &\qquad 0 + x            &\rightarrow x      \\
+    (x - y) + y       &\rightarrow x            &\qquad x + (y - x)      &\rightarrow y      \\
+\end{align*}
+These rules target common arithmetic simplifications that occur in real-world programs and can lead to more efficient generated code by eliminating unnecessary operations.
+Canonicalization is particularly valuable because it tends to expose further optimization opportunities and simplify control or data flow in the IR.
+The Prolog rules for these transformations are simple and stateless, making them well-suited for logic-based, declarative expressions.
+This declarative form makes the rules easy to read and reason about.
+
+\subsection*{Prolog Implementation}
+\newpage
+\begin{lstlisting}[language=Prolog]
+% (x - y) + y -> x
+canonical(node(addnode, node(Id, subnode, X, Y), Y), Result) :-
+   find_id(X, IdX),
+   Result = lookup(IdX).
+\end{lstlisting}
+    
+This rule matches an \texttt{addnode} where the first operand is a \texttt{subnode}, and the second operand is identical to the right-hand operand of the subtraction.
+The detailed structure of the \texttt{subnode} operands \texttt{X} and \texttt{Y} is not important to the transformation. 
+As long as the same \texttt{Y} appears both as the right operand of the subtraction and as the second operand of the addition, the rule can be applied. 
+If such a pattern is found, the rule simplifies the expression \texttt{(x - y) + y} to just \texttt{x} by returning a lookup of \texttt{X}'s identifier. 
+The use of helper predicate \texttt{find\_id/2} allows the rule to extract node identifiers from the IR term tree. 
+The resulting structure is returned as a new term in the variable \texttt{Result}, which is later parsed and reconstructed back into a GraalVM IR node by the result parser.
+
+\begin{lstlisting}[language=Prolog]
+% These predicates are used to find the ID of a node.
+find_id(node(Id, _), Id).
+find_id(node(Id, _, _), Id).
+find_id(node(Id, _, _, _), Id).
+find_id(node(Id, _, _, _, _), Id).
+find_id(node(Id, _, _, _, _, _), Id).
+\end{lstlisting}
+
+The code snippet above defines a set of helper predicates that enable the Prolog rules to extract the unique identifier associated with a node from its term representation.
+In this framework, each IR node is represented as a compound Prolog term where the first argument is the node's ID.
+Since nodes may have varying arities depending on their type and number of operands, multiple clauses of the \texttt{find\_id/2} predicate are defined to handle nodes with different numbers of arguments. 
+This abstraction allows Prolog rules to uniformly access node identifiers without needing to know the exact structure of the node, improving both readability and generality of the optimization rules.
+
+\subsection*{Java Implementation Comparision}
+\begin{lstlisting}[language=Java]
+if (forX instanceof NegateNode) {
+    // -x + y => y - x
+    return BinaryArithmeticNode.sub(forY, ((NegateNode) forX).getValue(), view);
+} else if (forY instanceof NegateNode) {
+    // x + -y => x - y
+    return BinaryArithmeticNode.sub(forX, ((NegateNode) forY).getValue(), view);
+} ...
+\end{lstlisting}
+
+The code snippet above provides example of the Java implementation for canonicalization rules.
+Both the Java and Prolog versions aim to perform arithmetic simplification, and in this case, both are relatively simple because the underlying transformation rule itself is straightforward. 
+However, the Prolog version stands out in terms of expressiveness and clarity. The Java code, while easy to follow, relies on verbose type checking and manual unwrapping of nodes, using imperative control flow and explicit casting to express the rule. In contrast, the Prolog version concisely encodes the same transformation using a single declarative clause that mirrors the algebraic identity directly. This leads to greater readability and a closer correspondence between the code and the mathematical reasoning behind the optimization, making the intent of the transformation immediately apparent.
