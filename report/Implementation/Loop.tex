@@ -8,6 +8,8 @@ This project has implemented rules to match a variety of loop invariant reassoci
     (inv2 - i) - inv1          &\rightarrow (inv2 - inv1) - i        &\qquad (i - inv2) - inv1           &\rightarrow i - (inv1 + inv2) \\
     &\qquad  (i  \texttt{{\ }Op{\ }} inv2) \texttt{{\ }Op{\ }} inv1         &\rightarrow i \texttt{{\ }Op{\ }} (inv1 \texttt{{\ }Op{\ }} inv2) \\
 \end{align*}
+\vspace{-10pt}
+
 In these patterns, \texttt{inv1} and \texttt{inv2} represent invariant expressions that do not change within the loop, while \texttt{i} denotes a loop-variant variable. The goal of these rules is to isolate the loop-variant component in order to enable hoisting of loop-invariant computations outside the loop.
 The last rule in the table represents a generalized reassociation pattern where both occurrences of the operator \texttt{Op} must be the same and drawn from a specific set of associative operations: addition, multiplication, bitwise AND, OR, XOR, and arithmetic max or min. 
 These operations are associative and commutative, meaning the order of operands does not affect the result.
@@ -38,7 +40,7 @@ find_reassociate_inv(Node, LoopNodes, R) :-
 \end{lstlisting}
 
 The predicate \texttt{find\_reassociate\_inv/3} serves as the entry point for identifying potential opportunities to reassociate invariant computations. The predicate takes a node (\texttt{Node}), a list of loop-related nodes (\texttt{LoopNodes}), and returns a reassociation result (\texttt{R}). It begins by extracting the type and subcomponents of the input node via \texttt{node\_type/6}. It then attempts to find a matching reassociation pattern for the first level of operands using \texttt{find\_reassociate/7}, which yields a matched node identifier (\texttt{Match1Id}), the non-matching "other" node (\texttt{Other1}), and which side the match occurred on (\texttt{MatchSide1}). The process is repeated for \texttt{Other1}, attempting to trace a second level of potential reassociation. The identifiers for these "other" nodes are resolved using \texttt{find\_id/2}, and finally, all gathered information is passed into \texttt{reassociate\_rule/8}, which checks whether a valid transformation rule applies and produces the reassociation result (\texttt{R}). Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes.
-\smallbreak
+
 \begin{lstlisting}[language=Prolog]
 % Base case: NodeId should not be in LoopNodes.
 is_invariant(Node, NodeId, LoopNodes) :-
@@ -74,11 +76,11 @@ reassociate_rule(
 ) :-
     reassociate_add_sub(Match1Id, Match2Id, Other2Id, MatchSide2, R).
 \end{lstlisting}
-\smallbreak
+
+\newpage
 The above Prolog code defines a specific pattern-matching rule for reassociating arithmetic expressions in the case where the first operation is addition and the second operation is subtraction. The predicate \texttt{reassociate\_rule/8} captures this transformation by invoking \texttt{reassociate\_add\_sub/5}, which encodes two concrete transformation patterns.
 The \texttt{reassociate\_rule/8} predicate takes as input the types of the first and second operations (e.g., \texttt{addnode} and \texttt{subnode}), the identifiers of two matched subexpressions (\texttt{Match1Id} and \texttt{Match2Id}), information about which sides of the expressions matched (\texttt{MatchSide1} and \texttt{MatchSide2}), the identifier of the other node involved in the reassociation (\texttt{Other2Id}), and finally returns the reassociated expression \texttt{R}. This input allows \texttt{reassociate\_rule/8} to select and apply the appropriate transformation pattern based on the structure and position of the invariant subexpressions.
 
-\smallbreak
 \begin{lstlisting}[language=Prolog]
 % (inv2 - i) + inv1 -> (inv1 + inv2) - i
 reassociate_add_sub(
@@ -99,7 +101,6 @@ reassociate_add_sub(
     ).
 \end{lstlisting}
 
-\smallbreak
 The two clauses of \texttt{reassociate\_add\_sub/5} define transformation rules that restructure arithmetic expressions to group loop-invariant computations. The first clause handles the case where the second invariant appears on the left side of a subtraction, while the second clause deals with the scenario where the invariant is on the right. In both cases, the transformation rearranges the expression so that the invariant parts are grouped together. 
 This is just one example of a family of rules used to optimize expressions through reassociation. Similar predicates exist for other operator combinations such as \texttt{reassociate\_sub\_sub}, \texttt{reassociate\_sub\_add}, and so on, each encoding the specific transformation rules for their respective operator pairings.
 

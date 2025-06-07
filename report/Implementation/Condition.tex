@@ -68,9 +68,9 @@ The predicate \texttt{find\_dominator/2} finds the immediate dominator of a node
 Once the dominator is found, \texttt{update\_child\_level/2} updates the child node’s level relative to its parent by fetching the parent’s current level, incrementing it by one, and recording this new level for the child node using \texttt{asserta\_unique/1}. 
 If no dominator is found (such as for the root or first \texttt{if} node), it assigns level zero to the node and returns failure. 
 This mechanism tracks the depth of nodes in the dominator tree or control flow hierarchy, which is critical for later analysis or optimizations.
-\smallbreak
+
 \begin{lstlisting}[language=Prolog]
-% Predicate to find the maximum value of levels
+% Predicate to find the maximum levels of the tree
 find_max_level(MaxLevel) :-
     findall(Level, level(_, Level), Levels),
     max_list(Levels, MaxLevel).
@@ -101,10 +101,9 @@ check_successor_type(NodeId, DominatorId, Result) :-
     Result = unknown.
 \end{lstlisting}
 
-\newpage
 The above Prolog predicate \texttt{check\_successor\_type/3} determines whether a given \texttt{NodeId} is a true successor, a false successor, or neither (unknown) with respect to an \texttt{if} node identified by \texttt{DominatorId}. It starts by retrieving the \texttt{if} node corresponding to \texttt{DominatorId}, which has two successor nodes: \texttt{TrueSucc} and \texttt{FalseSucc}. Then it checks if the given \texttt{NodeId} matches the beginning node of the true branch (\texttt{TrueSucc}); if so, it binds \texttt{Result} to \texttt{true}. Otherwise, it checks if \texttt{NodeId} matches the beginning node of the false branch (\texttt{FalseSucc}); if so, it binds \texttt{Result} to \texttt{false}. If neither condition holds, it assigns \texttt{Result} to \texttt{unknown}.
 
-\smallbreak
+\newpage
 \begin{lstlisting}[language=Prolog]
 check_guard(DomOp, IdX, DomValueY, SuccType, NodeId) :-
     % Do nothing if dominator value is null
@@ -133,7 +132,7 @@ check_guard(NodeId, DominatorId, SuccType) :-
 The above Prolog code is designed to recognize and remember useful information from conditional checks in earlier parts of a program’s control flow, which can later help optimize the program. The first predicate, \texttt{check\_guard/3}, operates at a higher level by examining the current node’s condition and its dominator’s condition. It ensures both conditions relate to the same variable with identifier \texttt{IdX} and that the dominator’s condition compares that variable to a constant. If these checks pass, it calls \texttt{check\_guard/5} to attempt recording a \texttt{stamp} representing the possible known variable values.
 The second predicate, \texttt{check\_guard/5}, takes the comparison operator from the dominator node, the variable’s identifier \texttt{IdX}, the constant value \texttt{DomValueY} from the dominator node, the type of successor branch (true or false), and the current node \texttt{NodeId}. It first skips processing if the dominator value is missing. Otherwise, it retrieves the node’s level in the control flow and, based on the operator and successor type, records a \texttt{stamp} fact. For example, if the operator is equality and the branch is true, it records that the variable equals the constant. If the operator is less-than and the branch is false, it records that the variable is at least the constant value. This \texttt{stamp} acts as a fact that the system can later use to simplify expressions or optimize code.
 
-\smallbreak
+\newpage
 \begin{lstlisting}[language=Prolog]
 % Constant condition: value stamp available and deterministic
 try_fold('>=', ValueY, MinX, MaxX, true) :- 

@@ -1,3 +1,7 @@
+\lstset{
+    aboveskip=5pt,
+    belowskip=5pt
+}
 \subsection{Add Node Canonicalization}
 \subsection*{Use cases}
 This project has implemented eight canonicalization rules for the \texttt{AddNode} as shown below.
@@ -13,7 +17,6 @@ The Prolog rules for these transformations are simple and stateless, making them
 This declarative form makes the rules easy to read and reason about.
 
 \subsection*{Prolog Implementation}
-\newpage
 \begin{lstlisting}[language=Prolog]
 % (x - y) + y -> x
 canonical(node(addnode, node(Id, subnode, X, Y), Y), Result) :-

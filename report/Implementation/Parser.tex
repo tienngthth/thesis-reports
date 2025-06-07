@@ -5,12 +5,10 @@ A critical part of integrating Prolog-based optimization into the GraalVM compil
 
 The parser currently supports two main categories of Prolog terms: lookup terms and node terms.
 Each of these is parsed into a distinct internal representation that maps to an IR node construction or modification.
-
 \begin{description}
     \item[Lookup Terms:] A lookup term allows the Prolog engine to refer to an existing node in the IR graph by its identifier. This supports reusing nodes in the optimization result rather than duplicating them. For example, \texttt{lookup(42)} instructs the parser to retrieve the IR node with ID \texttt{42} from the existing graph and use it as part of the resulting computation.
     \item[Node Terms:] A node term is used to represent the creation of a new IR node, such as arithmetic or constant node. Each term specifies a node type followed by one or more arguments, which can themselves be terms (allowing for recursive nesting). For instance, an addition node that sums two constants might be represented as: \texttt{node(addnode, node(constantnode, 1), node(constantnode, 2))}. This term defines an \texttt{AddNode} with two operand nodes created from constant values \texttt{1} and \texttt{2}.
 \end{description}
-
 \subsection{Grammar Specification}
 
 The Prolog terms parsed by this component follow a well-defined recursive grammar. The grammar is shown below using a variant of Extended Backus-Naur Form (EBNF):
@@ -69,7 +67,7 @@ This recursive descent through the parsed term tree ensures that the full IR sub
 
 \subsection{Example Use Case}
 The following node representation describes an \texttt{AddNode} where the first operand is the existing IR node with ID \texttt{3}, and the second operand is a multiplication of a constant \texttt{2} with another existing node with ID \texttt{5}.
-\newpage
+
 \begin{lstlisting}[language=Prolog]
 node(
     addnode,
@@ -78,6 +76,7 @@ node(
 )
 \end{lstlisting}
 
+\newpage
 The parsing and interpretation process proceeds as follows:
 
 \begin{enumerate}
