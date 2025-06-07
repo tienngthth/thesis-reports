@@ -1,6 +1,7 @@
 \section{IR to Prolog Translation}
-To enable logic-based optimization in GraalVM, the intermediate representation (IR) must first be translated into a form that a Prolog engine can understand. This involves converting each IR node into a Prolog-compatible term that captures its structure and semantics. These terms can then be used as inputs to Prolog rules for reasoning and optimization, or asserted into the knowledge base when needed.
-The representation is designed to be simple, uniform, and easy to parse. Each IR node is expressed as a term of the form \texttt{node(Id, Type, \ldots)}, where the first argument is a unique identifier for the node, and the second indicates its type (e.g., \texttt{add}, \texttt{if}, \texttt{constant}). The remaining arguments depend on the node type and encode operands, literal values, or successor relationships. This positional convention ensures that both data-flow and control-flow relationships are consistently represented and easily processed by Prolog.
+\label{sec:generate-facts}
+To enable logic-based optimization in GraalVM, the intermediate representation (IR) must first be translated into a form suitable for Prolog. This involves converting each IR node into a Prolog term. These terms can then be used as inputs to Prolog rules for reasoning and optimization, or asserted into the knowledge base when needed.
+The representation is designed to be simple, uniform, and easy to parse. Each IR node is expressed as a term of the form \texttt{node(Id, Type, \ldots)}, where the first argument is a unique identifier for the node within the method graph, and the second indicates its type (e.g., \texttt{add}, \texttt{if}, \texttt{constant}). The remaining arguments depend on the node type and encode operands, literal values, or successor relationships.
 
 \subsection*{Binay Arithmetic Nodes}
 Binary arithmetic operations such as addition, subtraction, and similar computations are represented using the following structure:
@@ -10,11 +11,11 @@ node(Id, Type, FirstOperandId, SecondOperandId)
 \end{lstlisting}
 
 Where:
-\begin{itemize}
-\item \texttt{Id}: Unique identifier for this node.
-\item \texttt{Type}:  Specifies the arithmetic operation being performed (e.g., \texttt{add}, \texttt{sub}).
-\item \texttt{FirstOperandId} and \texttt{SecondOperandId}: Identifiers of the nodes providing the operands.
-\end{itemize}
+\begin{description}
+    \item \textbf{Id}: Unique identifier for this node.
+    \item \textbf{Type}:  Specifies the arithmetic operation being performed (e.g., \texttt{add}, \texttt{sub}).
+    \item \textbf{FirstOperandId} and \texttt{SecondOperandId}: Identifiers of the nodes providing the operands.
+\end{description}
 
 \textbf{Example:}
 \begin{lstlisting}[language=Prolog]
@@ -23,22 +24,21 @@ node(1, add, 2, 3)
 This defines an \texttt{AddNode} with ID \texttt{1}, which computes the sum of the results from nodes \texttt{2} and \texttt{3}.
 
 
-\subsection*{Control Flow Nodes}
-
-Control flow constructs, such as conditional branches, are represented as follows:
+\subsection*{If Nodes}
+An if statement is represented using the following structure:
 
 \begin{lstlisting}[language=Prolog]
 node(Id, Type, ConditionId, TrueSuccessorId, FalseSuccessorId)
 \end{lstlisting}
 
 Where:
-\begin{itemize}
-  \item \texttt{Id}: Unique identifier for this control node.
-  \item \texttt{Type}: Specifies the control type (e.g., \texttt{if}, \texttt{while}).
-  \item \texttt{ConditionId}: Identifier of the node that evaluates the condition.
-  \item \texttt{TrueSuccessorId}: Node to proceed to if the condition is true.
-  \item \texttt{FalseSuccessorId}: Node to proceed to if the condition is false.
-\end{itemize}
+\begin{description}
+  \item \textbf{Id}: Unique identifier for this node.
+  \item \textbf{Type}: Specifies the node type (e.g., \texttt{if}).
+  \item \textbf{ConditionId}: Identifier of the node that evaluates the condition.
+  \item \textbf{TrueSuccessorId}: Node to proceed to if the condition is true.
+  \item \textbf{FalseSuccessorId}: Node to proceed to if the condition is false.
+\end{description}
 
 \textbf{Example:}
 \begin{lstlisting}[language=Prolog]

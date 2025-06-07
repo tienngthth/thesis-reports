@@ -14,12 +14,12 @@
 \contentsline {section}{\numberline {4.1}IR to Prolog Translation}{13}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Prolog Optimization Rules}{14}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}Add Node Canonicalization}{15}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}And Node Canonicalization}{17}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.2}And Node Canonicalization}{16}{subsection.4.2.2}%
 \contentsline {subsection}{\numberline {4.2.3}Loop Invariant Reassociation}{18}{subsection.4.2.3}%
 \contentsline {subsection}{\numberline {4.2.4}Conditional Eliminationtion}{22}{subsection.4.2.4}%
 \contentsline {section}{\numberline {4.3}Query Result Parser}{28}{section.4.3}%
 \contentsline {subsection}{\numberline {4.3.1}Supported Term Types}{28}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Grammar Specification}{29}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.2}Grammar Specification}{28}{subsection.4.3.2}%
 \contentsline {subsection}{\numberline {4.3.3}Recursive Descent Parsing}{29}{subsection.4.3.3}%
 \contentsline {subsection}{\numberline {4.3.4}IR Reconstruction}{30}{subsection.4.3.4}%
 \contentsline {subsection}{\numberline {4.3.5}Example Use Case}{30}{subsection.4.3.5}%

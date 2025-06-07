@@ -4,7 +4,7 @@
 }
 \subsection{Add Node Canonicalization}
 \subsection*{Use cases}
-This project has implemented eight canonicalization rules for the \texttt{AddNode} as shown below.
+This project has implemented eight exploratory canonicalization rules for the \texttt{AddNode} as shown below.
 \begin{align*}
     x + (-y)          &\rightarrow x - y        &\qquad -x + y           &\rightarrow y - x \\
     \sim x + x        &\rightarrow -1           &\qquad x + \sim x       &\rightarrow -1     \\
@@ -19,31 +19,11 @@ This declarative form makes the rules easy to read and reason about.
 \subsection*{Prolog Implementation}
 \begin{lstlisting}[language=Prolog]
 % (x - y) + y -> x
-canonical(node(addnode, node(Id, subnode, X, Y), Y), Result) :-
-   find_id(X, IdX),
+canonical(node(add, node(Id, sub, IdX, IdY), IdY), Result) :-
    Result = lookup(IdX).
 \end{lstlisting}
     
-This rule matches an \texttt{addnode} where the first operand is a \texttt{subnode}, and the second operand is identical to the right-hand operand of the subtraction.
-The detailed structure of the \texttt{subnode} operands \texttt{X} and \texttt{Y} is not important to the transformation. 
-As long as the same \texttt{Y} appears both as the right operand of the subtraction and as the second operand of the addition, the rule can be applied. 
-If such a pattern is found, the rule simplifies the expression \texttt{(x - y) + y} to just \texttt{x} by returning a lookup of \texttt{X}'s identifier. 
-The use of helper predicate \texttt{find\_id/2} allows the rule to extract node identifiers from the IR term tree. 
-The resulting structure is returned as a new term in the variable \texttt{Result}, which is later parsed and reconstructed back into a GraalVM IR node by the result parser.
-
-\begin{lstlisting}[language=Prolog]
-% These predicates are used to find the ID of a node.
-find_id(node(Id, _), Id).
-find_id(node(Id, _, _), Id).
-find_id(node(Id, _, _, _), Id).
-find_id(node(Id, _, _, _, _), Id).
-find_id(node(Id, _, _, _, _, _), Id).
-\end{lstlisting}
-
-The code snippet above defines a set of helper predicates that enable the Prolog rules to extract the unique identifier associated with a node from its term representation.
-In this framework, each IR node is represented as a compound Prolog term where the first argument is the node's ID.
-Since nodes may have varying arities depending on their type and number of operands, multiple clauses of the \texttt{find\_id/2} predicate are defined to handle nodes with different numbers of arguments. 
-This abstraction allows Prolog rules to uniformly access node identifiers without needing to know the exact structure of the node, improving both readability and generality of the optimization rules.
+This rule matches an \texttt{addnode} where the first operand is a \texttt{subnode} identified by \texttt{Id}, and the second operand is identical to the right operand of that subtraction. The transformation relies solely on node identifiers rather than the internal structure of the nodes. When the same node ID \texttt{IdY} appears both as the right operand of the subtraction and as the second operand of the addition, the rule simplifies the expression \texttt{(x - y) + y} to just \texttt{x} by returning a lookup of \texttt{IdX}. Using node identifiers works correctly because the intermediate representation employs common subexpression sharing and global value numbering, ensuring that identical subexpressions share the same node ID. The resulting structure is returned as a new term in the variable \texttt{Result}, which is later parsed and reconstructed back into a GraalVM IR node by the result parser.
 
 \subsection*{Java Implementation Comparision}
 \begin{lstlisting}[language=Java]

@@ -1,14 +1,14 @@
 \section{Query Result Parser}
-A critical part of integrating Prolog-based optimization into the GraalVM compilation pipeline is interpreting the results of Prolog queries in a way that can be applied back to the compiler’s intermediate representation (IR). This task is handled by a custom Prolog result parser, which translates the Prolog engine’s output terms into corresponding GraalVM IR node constructions. The parser is implemented using a recursive descent approach and is designed to be modular, extensible, and robust to varying term structures. After optimization opportunities are identified through Prolog queries, the results returned by the logic engine must be interpreted as transformations to be applied to the IR graph. These transformations can include the reuse of existing nodes or the creation of new computation nodes. To support this, the parser must handle a structured grammar of Prolog terms that describe IR transformations. The design emphasizes clarity and extensibility, allowing new node types or term patterns to be added as the optimization logic evolves.
+\label{sec:parser}
+A critical part of integrating Prolog-based optimization into the GraalVM compilation pipeline is interpreting the results of Prolog queries in a way that can be applied to the compiler’s intermediate representation (IR). This task is handled by a custom Prolog result parser, which translates the Prolog’s output terms into corresponding GraalVM IR node constructions. The parser is implemented using a recursive descent approach and is designed to be modular, extensible, and robust to varying term structures. After optimization opportunities are identified through Prolog queries, the results returned must be interpreted as transformations to be applied to the IR graph. These transformations can include the reuse of existing nodes or the creation of new computation nodes. To support this, the parser must handle a structured grammar of Prolog terms that describe IR transformations. The design emphasizes clarity and extensibility, allowing new node types or term patterns to be added as the optimization logic evolves.
 
 \subsection{Supported Term Types}
 
 The parser currently supports two main categories of Prolog terms: lookup terms and node terms.
 Each of these is parsed into a distinct internal representation that maps to an IR node construction or modification.
-\begin{description}
-    \item[Lookup Terms:] A lookup term allows the Prolog engine to refer to an existing node in the IR graph by its identifier. This supports reusing nodes in the optimization result rather than duplicating them. For example, \texttt{lookup(42)} instructs the parser to retrieve the IR node with ID \texttt{42} from the existing graph and use it as part of the resulting computation.
-    \item[Node Terms:] A node term is used to represent the creation of a new IR node, such as arithmetic or constant node. Each term specifies a node type followed by one or more arguments, which can themselves be terms (allowing for recursive nesting). For instance, an addition node that sums two constants might be represented as: \texttt{node(addnode, node(constantnode, 1), node(constantnode, 2))}. This term defines an \texttt{AddNode} with two operand nodes created from constant values \texttt{1} and \texttt{2}.
-\end{description}
+A lookup term refers to an existing node in the IR graph by its identifier. This supports reusing nodes in the optimization result rather than duplicating them. For example, \texttt{lookup(42)} instructs the parser to retrieve the IR node with ID \texttt{42} from the existing graph and use it as part of the resulting computation.
+A node term is used to represent the creation of a new IR node, such as arithmetic or constant node. Each term specifies a node type followed by one or more arguments, which can themselves be terms (allowing for recursive nesting). For instance, an addition node that sums two constants might be represented as: \texttt{node(addnode, node(constantnode, 1), node(constantnode, 2))}. This term defines an \texttt{AddNode} with two operand nodes created from constant values \texttt{1} and \texttt{2}.
+
 \subsection{Grammar Specification}
 
 The Prolog terms parsed by this component follow a well-defined recursive grammar. The grammar is shown below using a variant of Extended Backus-Naur Form (EBNF):
@@ -76,7 +76,6 @@ node(
 )
 \end{lstlisting}
 
-\newpage
 The parsing and interpretation process proceeds as follows:
 
 \begin{enumerate}
