@@ -6,19 +6,20 @@ This project has implemented two canonicalization rules for the \texttt{AndNode}
     x \,\&\, y &\rightarrow x \quad \text{if } \sim \texttt{mustSetY} \,\&\, \texttt{maySetX} = 0
 \end{align*}
 
-These rules, while still stateless and pattern-based, are slightly more involved than typical structural rules because they depend on semantic properties of the operands. Specifically, they require inspecting the \texttt{mustSet} and \texttt{maySet} bitmasks associated with the operands. In the context of compiler optimizations, \texttt{mustSet} and \texttt{maySet} are abstract representations of known and possible values at the bit level. The \texttt{mustSet} bitmask identifies bits that are guaranteed to be 1 in the operand, while the \texttt{maySet} bitmask identifies bits that could potentially be 1. These bitmasks enable reasoning about the outcome of bitwise operations without knowing exact operand values at compile time.
+These rules, while still stateless and pattern-based, are slightly more involved than typical structural rules because they depend on type analysis of the operands. Specifically, they require inspecting the \texttt{mustSet} and \texttt{maySet} bitmasks associated with the operands. In the context of compiler optimizations, \texttt{mustSet} and \texttt{maySet} are abstract representations of known and possible values at the bit level. The \texttt{mustSet} bitmask identifies bits that are guaranteed to be 1 in the operand, while the \texttt{maySet} bitmask identifies bits that could potentially be 1. The operand \texttt{x} satisfies the following properties: \texttt{mustSetX \& x = mustSetX} and \texttt{\textasciitilde maySetX \& x = 0}. 
+These bitmasks enable reasoning about the outcome of bitwise operations without knowing exact operand values at compile time.
 These rules help reduce redundant operations and enable further simplifications by eliminating unnecessary bitwise computations when the operand properties make them semantically redundant.
 
 \subsection*{Prolog Implementation}
 \begin{lstlisting}[language=Prolog]
 % Complement of a bitmask
 bitwise_not(X, Result) :-
-    Mask is (1 << 32) - 1,
+    Mask is (1 << 64) - 1,
     Result is X xor Mask.
 
 % x & y -> y if ~mustBeSetX & mayBeSetY == 0
-canonical(node(andnode, X, Y, StampX, StampY), Result) :-
-    StampX = stamp(_, _, MustBeSetX, _,),
+canonical(node(and, X, Y, StampX, StampY), Result) :-
+    StampX = stamp(_, _, MustBeSetX, _),
     StampY = stamp(_, _, _, MayBeSetY),
     bitwise_not(MustBeSetX, ComplementMustBeSetX),
     (ComplementMustBeSetX /\ MayBeSetY) = 0,
@@ -27,7 +28,7 @@ canonical(node(andnode, X, Y, StampX, StampY), Result) :-
 \end{lstlisting}
 This rule matches an \texttt{andnode} where the bitwise AND operation can potentially be simplified based on the bitmask metadata of its operands. 
 It takes as input an \texttt{andnode} term consisting of two operand nodes along with their associated \texttt{stamp} information. 
-Each \texttt{stamp} contains four pieces of data: minimum value that the node could have, maximum value that the node could have, \texttt{mustBeSet} bits, and \texttt{mayBeSet} bits. 
+Each \texttt{stamp} contains four pieces of data: the minimum value that the node could have, the maximum value that the node could have, the \texttt{mustBeSet} bits, and the \texttt{mayBeSet} bits. 
 For this rule, only the \texttt{mustBeSet} and \texttt{mayBeSet} fields are relevant. 
 The rule computes the bitwise complement of the first operand’s \texttt{mustBeSet} bits and then performs a bitwise AND with the second operand’s \texttt{mayBeSet} bits. 
 If this result is zero, it indicates that the original AND operation can be simplified to just the second operand. 
@@ -35,6 +36,22 @@ The rule then extracts the unique identifier of this operand and returns it as t
 The bitwise complement operation is implemented using a helper predicate \texttt{bitwise\_not} because the Projog engine does not provide a built-in predicate for this operation. 
 This method leverages precise bit-level information to safely optimize the code.
 A similar predicate is used to handle the complementary case where x is returned instead of y.
+
+\begin{lstlisting}[language=Prolog]
+% These predicates are used to find the ID of a node.
+find_id(node(Id, _), Id).
+find_id(node(Id, _, _), Id).
+find_id(node(Id, _, _, _), Id).
+find_id(node(Id, _, _, _, _), Id).
+find_id(node(Id, _, _, _, _, _), Id).
+\end{lstlisting}
+
+The code snippet above defines a set of helper predicates that enable the Prolog rules to extract the unique identifier associated with a node from its term representation.
+In this framework, each IR node is represented as a compound Prolog term where the first argument is the node's ID.
+Since nodes may have varying arities depending on their type and number of operands, multiple clauses of the \texttt{find\_id/2} predicate are defined to handle nodes with different numbers of arguments. 
+This abstraction allows Prolog rules to uniformly access node identifiers without needing to know the exact structure of the node, improving both readability and generality of the optimization rules.
+
+
 \subsection*{Java Implementation Comparision}
 \begin{lstlisting}[language=Java]
 IntegerStamp xStamp = (IntegerStamp) rawXStamp;

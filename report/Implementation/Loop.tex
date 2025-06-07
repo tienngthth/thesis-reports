@@ -16,6 +16,31 @@ These operations are associative and commutative, meaning the order of operands 
 
 \subsection*{Prolog Implementation}
 \begin{lstlisting}[language=Prolog]
+% Base case: NodeId should not be in LoopNodes.
+is_invariant(Node, NodeId, LoopNodes) :-
+    \+ member(NodeId, LoopNodes).
+
+% Recursive case: Check invariants for the children nodes X and Y.
+is_invariant(Node, NodeId, LoopNodes) :-
+    node_type(Node, NodeType, X, Y, IdX, IdY),
+    is_invariant(X, IdX, LoopNodes),
+    is_invariant(Y, IdY, LoopNodes).
+
+% Case: Left is invariant, Right is variant
+find_reassociate(X, Y, IdX, IdY, LoopNodes, IdX, Y, left) :-
+    is_invariant(X, IdX, LoopNodes),
+    \+ is_invariant(Y, IdY, LoopNodes).
+
+% Case: Right is invariant, Left is variant
+find_reassociate(X, Y, IdX, IdY, LoopNodes, IdY, X, right) :-
+    \+ is_invariant(X, IdX, LoopNodes),
+    is_invariant(Y, IdY, LoopNodes).
+\end{lstlisting}
+
+The above Prolog code defines logic for identifying loop-invariant computations and potential reassociation opportunities. The predicate \texttt{is\_invariant/3} determines whether a node is invariant with respect to a list of loop-related node identifiers given by \texttt{LoopNodes}. In the base case, a node is considered invariant if its identifier, \texttt{NodeId}, is not a member of \texttt{LoopNodes}. In the recursive case, the predicate assumes the node has two child nodes, \texttt{X} and \texttt{Y}, with corresponding identifiers \texttt{IdX} and \texttt{IdY}. It recursively checks that both children are invariant. The predicate \texttt{find\_reassociate/7} defines cases for recognizing expressions where one side is invariant and the other is not. In the first case, if the left child \texttt{X} is invariant and the right child \texttt{Y} is not, then it identifies \texttt{X} as the match and sets the side to \texttt{left}. In the second case, if the right child \texttt{Y} is invariant and the left child \texttt{X} is not, then it identifies \texttt{Y} as the match and sets the side to \texttt{right}. 
+This logic enables detection of partial invariant expressions that could be reassociated to improve performance.
+
+\begin{lstlisting}[language=Prolog]
 % Entry point for invariant reassociation   
 find_reassociate_inv(Node, LoopNodes, R) :-
     node_type(Node, NodeType, X, Y, IdX, IdY),
@@ -39,33 +64,7 @@ find_reassociate_inv(Node, LoopNodes, R) :-
     ).
 \end{lstlisting}
 
-The predicate \texttt{find\_reassociate\_inv/3} serves as the entry point for identifying potential opportunities to reassociate invariant computations. The predicate takes a node (\texttt{Node}), a list of loop-related nodes (\texttt{LoopNodes}), and returns a reassociation result (\texttt{R}). It begins by extracting the type and subcomponents of the input node via \texttt{node\_type/6}. It then attempts to find a matching reassociation pattern for the first level of operands using \texttt{find\_reassociate/7}, which yields a matched node identifier (\texttt{Match1Id}), the non-matching "other" node (\texttt{Other1}), and which side the match occurred on (\texttt{MatchSide1}). The process is repeated for \texttt{Other1}, attempting to trace a second level of potential reassociation. The identifiers for these "other" nodes are resolved using \texttt{find\_id/2}, and finally, all gathered information is passed into \texttt{reassociate\_rule/8}, which checks whether a valid transformation rule applies and produces the reassociation result (\texttt{R}). Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes.
-
-\begin{lstlisting}[language=Prolog]
-% Base case: NodeId should not be in LoopNodes.
-is_invariant(Node, NodeId, LoopNodes) :-
-    \+ member(NodeId, LoopNodes).
-
-% Recursive case: Check invariants for the children nodes X and Y.
-is_invariant(Node, NodeId, LoopNodes) :-
-    node_type(Node, NodeType, X, Y, IdX, IdY),
-    is_invariant(X, IdX, LoopNodes),
-    is_invariant(Y, IdY, LoopNodes).
-
-% Case: Left is invariant, Right is variant
-find_reassociate(X, Y, IdX, IdY, LoopNodes, IdX, Y, left) :-
-    is_invariant(X, IdX, LoopNodes),
-    \+ is_invariant(Y, IdY, LoopNodes).
-
-% Case: Right is invariant, Left is variant
-find_reassociate(X, Y, IdX, IdY, LoopNodes, IdY, X, right) :-
-    \+ is_invariant(X, IdX, LoopNodes),
-    is_invariant(Y, IdY, LoopNodes).
-\end{lstlisting}
-
-\smallbreak
-The above Prolog code defines logic for identifying loop-invariant computations and potential reassociation opportunities. The predicate \texttt{is\_invariant/3} determines whether a node is invariant with respect to a list of loop-related node identifiers given by \texttt{LoopNodes}. In the base case, a node is considered invariant if its identifier, \texttt{NodeId}, is not a member of \texttt{LoopNodes}. In the recursive case, the predicate assumes the node has two child nodes, \texttt{X} and \texttt{Y}, with corresponding identifiers \texttt{IdX} and \texttt{IdY}. It recursively checks that both children are invariant. The predicate \texttt{find\_reassociate/7} defines cases for recognizing expressions where one side is invariant and the other is not. In the first case, if the left child \texttt{X} is invariant and the right child \texttt{Y} is not, then it identifies \texttt{X} as the match and sets the side to \texttt{left}. In the second case, if the right child \texttt{Y} is invariant and the left child \texttt{X} is not, then it identifies \texttt{Y} as the match and sets the side to \texttt{right}. 
-This logic enables detection of partial invariant expressions that could be reassociated to improve performance.
+The predicate \texttt{find\_reassociate\_inv/3} serves as the entry point for identifying potential opportunities to reassociate invariant computations. The predicate takes a node (\texttt{Node}), a list of nodes inside the loop body (\texttt{LoopNodes}) that are not loop-invariant, and returns a reassociation result (\texttt{R}). It begins by extracting the type and subcomponents of the input node via \texttt{node\_type/6}. It then attempts to find a matching reassociation pattern for the first level of operands using \texttt{find\_reassociate/7}, which yields a matched node identifier (\texttt{Match1Id}), the non-matching ``other" node (\texttt{Other1}), and which side the match occurred on (\texttt{MatchSide1}). The process is repeated for \texttt{Other1}, attempting to trace a second level of potential reassociation. The identifiers for these ``other" nodes are resolved using \texttt{find\_id/2}, and finally, all gathered information is passed into \texttt{reassociate\_rule/8}, which checks whether a valid transformation rule applies and produces the reassociation result (\texttt{R}). Unlike the canonicalization rule, which typically operates on a single node in isolation, this rule explores a chain of connected nodes.
 
 \smallbreak
 \begin{lstlisting}[language=Prolog]
@@ -87,18 +86,20 @@ reassociate_add_sub(
     Match1Id, Match2Id, Other2Id, left,
     node(
         subnode, 
-        node(addnode, lookup(Match1Id), lookup(Match2Id)), 
-        lookup(Other2Id))
-    ).
+        node(addnode, lookup(Match1Id), lookup(Match2Id)
+    ), 
+    lookup(Other2Id))
+).
 
 % (i - inv2) + inv1 -> i + (inv1 - inv2)
 reassociate_add_sub(
     Match1Id, Match2Id, Other2Id, right,
     node(
         addnode, 
-        node(subnode, lookup(Match1Id), lookup(Match2Id)), 
-        lookup(Other2Id))
-    ).
+        node(subnode, lookup(Match1Id), lookup(Match2Id)
+    ), 
+    lookup(Other2Id))
+).
 \end{lstlisting}
 
 The two clauses of \texttt{reassociate\_add\_sub/5} define transformation rules that restructure arithmetic expressions to group loop-invariant computations. The first clause handles the case where the second invariant appears on the left side of a subtraction, while the second clause deals with the scenario where the invariant is on the right. In both cases, the transformation rearranges the expression so that the invariant parts are grouped together. 
@@ -131,4 +132,4 @@ if (isNonExactAddOrSub(node)) {
 \end{lstlisting}
 
 The code snippet above provides the Java implementation for reassociating invariant in loop.
-Both the Java and Prolog implementations perform loop invariant reassociation but differ significantly in style and clarity. The Java version uses several intermediary boolean variables like \texttt{invertM1}, \texttt{invertM2}, and \texttt{aSub} to control the flow and decide which arithmetic operation to apply. This approach, while compact, can be harder to follow because the logic is spread across multiple conditions and temporary variables, making the reasoning less direct. In contrast, the Prolog version is generally longer since it encodes each specific reassociation case as a separate predicate clause. This explicit case-by-case structure makes the Prolog code easier to understand and reason about, as each rule clearly corresponds to a particular algebraic transformation without relying on mutable state or complex branching.
+Both the Java and Prolog implementations perform loop invariant reassociation but differ significantly in style and clarity. The Java version uses several intermediary boolean variables like \texttt{invertM1}, \texttt{invertM2}, and \texttt{aSub} to control the flow and decide which arithmetic operation to apply. This approach, while compact, can be harder to follow because the logic is spread across multiple conditions and temporary variables, making the reasoning less direct. In contrast, the Prolog version is generally longer since it encodes each specific reassociation case as a separate predicate clause. This explicit case-by-case structure makes the Prolog code easier to understand and reason about, as each rule clearly corresponds to a particular transformation without relying on mutable state or complex branching.

@@ -38,7 +38,6 @@ Lam et al. developed a framework using Datalog queries and a specialized languag
     \label{figure:pql}
 \end{figure}
 
-\newpage
 \section{Transformation, Rewriting Techniques, and Verification}
 Transformation and rewriting techniques are essential to modern compiler optimization, enabling sophisticated processes like grammar specification, pattern matching, and program rewriting. Stratego~\cite{Eelco2001} is a language designed for specifying program transformation systems using rewriting strategies, enabling precise control over rule application. The compiler transforms these rules into C code and leverages the ATerm library for effective term representation. It has been used in several applications, including program transformation tools like XT, and domain-specific optimization frameworks like CodeBoost ~\cite{Eelco2001}. On the other hand, Veriopt \cite{Webb2023} offers a framework for formal verification of Graal compiler optimizations. This framework employs  ``term rewriting rules on the abstract term representation" \cite{Webb2023} and then maps these rules to term graph transformations. In the Veriopt project, a term rewriting system, also known as an optimization phase, comprises a set of rules that can be applied repeatedly to optimize expressions. Each phase is associated with different types of root nodes in patterns, such as AddNode, AbsNode, and MulNode. 
 

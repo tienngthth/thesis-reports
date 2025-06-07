@@ -1,5 +1,6 @@
 \section{Prolog Optimization Rules}
-Each optimization in this framework is defined in a dedicated Prolog file named after the transformation it performs, such as \texttt{addNode.pl}.
+\label{sec:rules}
+Each optimization in this framework is defined in a Prolog file named after the transformation it performs, such as \texttt{addNode.pl}.
 These files contain the logic rules that describe how specific intermediate representation (IR) patterns should be recognized and transformed during compilation.
 Stateless optimizations such as canonicalization and loop invariant reassociation are purely pattern based.
 They operate by matching structural patterns in the IR and returning transformed results without modifying the knowledge base.

@@ -16,14 +16,14 @@ Test Descriptions:
 Test Results:
 \begin{table}[h]
     \centering
-    \begin{tabular}{|l|r|r|}
+    \begin{tabular}{|l|r|r|r|}
         \hline
-        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ \\
+        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ & $Difference$ \\
         \hline
-        $negateAdd$   & $2,242$ & $2,133$ \\
-        $addNot$      & $2,964$ & $2,830$ \\
-        $addNeutral$  & $3,005$ & $2,920$ \\
-        $addSubNode$  & $3,050$ & $2,938$ \\
+        $addNot$      & $2,964$ & $2,830$ & $-134$ \\
+        $addSubNode$  & $3,050$ & $2,938$ & $-112$ \\
+        $negateAdd$   & $2,242$ & $2,133$ & $-109$ \\
+        $addNeutral$  & $3,005$ & $2,920$ & $-85$ \\
         \hline
     \end{tabular}
     \caption{Benchmark Results for Add Node Canonicalization Tests (Operations/Sec)}
@@ -32,7 +32,8 @@ Test Results:
 
 \vspace{-10pt}
 
-The benchmark results for the canonicalization tests (Table \ref{table:Canonicalization}) show a minor performance reductions when using Prolog. The performance drop is minimal, with only slight decreases in operations per second. For example, in the \textit{negateAdd} test, throughput drops from 2,242 ops/sec to 2,133 ops/sec, and in the \textit{addNot} test, it decreases from 2,964 ops/sec to 2,830 ops/sec.
+The benchmark results for the canonicalization tests (Table \ref{table:Canonicalization}) show minor performance reductions when using Prolog. The performance drop is minimal, with only slight decreases in operations per second. For example, in the \textit{negateAdd} test, throughput drops from 2,242 ops/sec to 2,133 ops/sec, and in the \textit{addNot} test, it decreases from 2,964 ops/sec to 2,830 ops/sec.
+This slowdown is primarily attributed to the overhead introduced by the initial startup of the Prolog engine, which occurs for every optimization and is more pronounced in the case of stateful optimizations (conditional elimination).
 
 \subsection*{Loop Invariant Reassociation Tests}
 Test Descriptions:
@@ -46,14 +47,14 @@ Test Descriptions:
 Test Results:
 \begin{table}[h]
     \centering
-    \begin{tabular}{|l|r|r|}
+    \begin{tabular}{|l|r|r|r|}
         \hline
-        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ \\
+        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ & $Difference$ \\
         \hline
-        $subSub$ & $304$ & $268$ \\
-        $subAdd$ & $367$ & $330$ \\
-        $addAdd$ & $375$ & $339$ \\
-        $mulMul$ & $370$ & $334$ \\
+        $subAdd$ & $367$ & $330$ & $-37$ \\
+        $subSub$ & $304$ & $268$ & $-36$ \\
+        $addAdd$ & $375$ & $339$ & $-36$ \\
+        $mulMul$ & $370$ & $334$ & $-36$ \\
         \hline
     \end{tabular}
     \caption{Benchmark Results for Reassociation Tests (Operations/Sec)}
@@ -62,7 +63,7 @@ Test Results:
 
 \vspace{-10pt}
 
-Similarly, the reassociation tests (Table \ref{table:Reassociation}) reveal a modest slowdown when Prolog is used. For instance, in the \textit{subSub} test, throughput drops from 304 ops/sec to 268 ops/sec, and in the \textit{addAdd} test, it decreases from 375 ops/sec to 339 ops/sec. Although there is some performance degradation, the effect of Prolog on the reassociation phase remains limited and does not severely impact throughput.
+Similarly, the reassociation tests (Table \ref{table:Reassociation}) reveal a modest slowdown when Prolog is used. Although there is some performance degradation, the effect of Prolog on the reassociation phase remains limited and does not severely impact throughput.
 
 \subsection*{Conditional Elimination Tests}
 
@@ -77,14 +78,14 @@ Test Descriptions:
 Test Results:
 \begin{table}[h]
     \centering
-    \begin{tabular}{|l|r|r|}
+    \begin{tabular}{|l|r|r|r|}
         \hline
-        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ \\
+        $Test$ & $Without$ $Prolog$ & $With$ $Prolog$ & $Difference$ \\
         \hline
-        $condElim1$ & $1,661$ & $394$ \\
-        $condElim2$ & $1,386$ & $355$ \\
-        $condElim3$ & $951$ & $310$ \\
-        $condElim4$ & $517$ & $243$ \\
+        $condElim1$ & $1,661$ & $394$ & $-1267$ \\
+        $condElim2$ & $1,386$ & $355$ & $-1031$ \\
+        $condElim3$ & $951$ & $310$ & $-641$ \\
+        $condElim4$ & $517$ & $243$ & $-274$ \\
         \hline
     \end{tabular}
     \caption{Benchmark Results for Condtional Eliminiation Tests (Operations/Sec)}
@@ -93,4 +94,4 @@ Test Results:
 \smallbreak
 
 \vspace{-10pt}
-The results in Table \ref{table:condElimination} show a noticeable drop in optimization throughput when Prolog is used for conditional elimination. The number of operations per second is significantly lower with Prolog across all tests. For example, \textit{condElim1} drops from 1,661 to 394 ops/sec, and \textit{condElim4} from 517 to 243 ops/sec. \textit{condElim1} is the simplest and fastest test as it only has 2 nested ifs, which is reflected in the much higher throughput without Prolog. However, when applying Prolog, its throughput drops the most, and all test results become more uniform. This is largely explained by Prolog’s significant startup overhead, which imposes a fixed cost that dominates the runtime for smaller tests. As a result, this overhead “levels” the performance across different test complexities, causing a uniform but overall slower throughput.
+The results in Table \ref{table:condElimination} show a noticeable drop in optimization throughput when Prolog is used for conditional elimination. The number of operations per second is significantly lower with Prolog across all tests. \textit{condElim1} is the simplest and fastest test as it only has 2 nested ifs, which is reflected in the much higher throughput without Prolog. However, when applying Prolog, its throughput drops the most, and all test results become more uniform. This is largely explained by Prolog’s significant startup overhead, which imposes a fixed cost that dominates the runtime for smaller tests. As a result, this overhead “levels” the performance across different test complexities, causing a uniform but overall slower throughput.

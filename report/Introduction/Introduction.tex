@@ -7,11 +7,14 @@ Logic programming languages with declarative specifications allow source program
 This project develops a Prolog-based optimization framework that integrates with the GraalVM compiler. The approach involved four main steps, developed in parallel to ensure compatibility. 
 First, GraalVM IR nodes are translated into Prolog terms suitable for Prolog queries.
 Second, optimization rules are written in Prolog using a declarative style to describe transformations. 
-Third, Prolog queries are executed from within GraalVM using Projog, a Java-based Prolog interpreter, to identify potential optimizations. Finally, a recursive descent parser interprets the results returned by Prolog. Each optimization transforms and reconstructs the IR, leading to an optimized program representation.
+Third, Prolog queries are executed from within GraalVM using Projog, a Java-based Prolog interpreter, to identify potential optimizations. Finally, a recursive descent parser interprets the results returned by Prolog.
 Together, these steps enables the integration of logic-based optimizations into the GraalVM compilation process. 
 To ensure correctness, the existing GraalVM test suites and new test cases verify the behavior of Prolog rules and validate the integration.
 
-This project implements and evaluates three optimizations: canonicalization, loop-invariant reassociation, and conditional elimination. These are selected to cover a range of optimization types, from simple canonicalization rules to more complex transformations involving control flow and data dependencies.
+This project implements and evaluates three optimizations: canonicalization, loop-invariant reassociation, and conditional elimination.
+These are chosen to cover a spectrum of optimization types, from simple, stateless canonicalization rules to more complex transformations involving control flow and data dependencies.
+Simple optimizations like canonicalization and loop-invariant reassociation are purely declarative and stateless. 
+While conditional elimination might be possible to implement in a stateless way, this project opts for a stateful approach because dynamically updating the knowledge base to track possible knwon variable values makes the analysis for this complex optimization simpler and more manageable.
 
 The framework’s performance is evaluated based on optimization throughput, measured as the number of optimization operations performed per second.
 An optimization operation is defined as the process of building the IR graph for a method and applying the optimization phases.

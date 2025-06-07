@@ -12,7 +12,7 @@ In Graal IR, nodes are categorized as fixed or floating. Fixed nodes represent o
     \label{figure:graphir}
 \end{figure}
 
-\autoref{figure:graphir} illustrates a simple IR graph corresponding to the Java code snippet below, with control flow edges highlighted in red. The graph starts at the Start node (node 0), which connects downward to an If node (node 9) that evaluates a condition based on node 6. Following data flow edges upward, this condition node compares parameter 1 (node 2) and constant 0 (node 5). The If node has two successors: the true branch on the left, beginning at node 8, and the false branch on the right, beginning at node 7. Each branch continues downward to Return nodes 11 and 13, respectively. Return node 11 produces its result by following data flow edges upward to node 10, which performs an addition operation, while Return node 13 follows data flow upward to node 12, which performs a subtraction. Both arithmetic nodes take parameter 1 (x) and parameter 2 (y) as the first and second operands. This traversal demonstrates how control and data flows interact to process and complete the function's execution.
+\autoref{figure:graphir} illustrates a simple IR graph corresponding to the Java code snippet below, with control flow edges highlighted in red. The graph starts at the Start node (node 0), which connects downward to an If node (node 9) that evaluates a condition based on node 6. Following data flow edges upward, this condition node compares parameter 1 (node 2) and constant 0 (node 5). The If node has two successors: the true branch on the left, beginning at node 8, and the false branch on the right, beginning at node 7. Each branch continues downward to Return nodes 11 and 13, respectively. Return node 11 produces its result by following data flow edges upward to node 10, which performs an addition operation, while Return node 13 follows data flow upward to node 12, which performs a subtraction. Both arithmetic nodes take parameter 1 (x) and parameter 2 (y) as the first and second operands.
 
 \begin{lstlisting}[language=Java]
 public int ifNode(int x, int y) {
@@ -26,7 +26,7 @@ public int ifNode(int x, int y) {
 
 \section{GraalVM Compiler Optimizations}
 
-In GraalVM, the compilation process is divided into two main phases. The first phase, involving the Graal IR, handles most of the high-level optimizations. This phase is further organized into three tiers: high-tier for high-level optimizations, mid-tier for memory-focused enhancements, and low-tier for low-level IR (LIR) conversion \cite{Graal2021}. This project primarily concentrates on high-tier optimizations within the GraalVM, specifically canonicalization rules for the \texttt{AddNode} and \texttt{AndNode}, as well as loop invariant reassociation optimizations, and conditional elimination.
+In GraalVM, the compilation process is divided into two main phases. The first phase, involving the Graal IR, handles most of the high-level optimizations. This phase is further organized into three tiers: high-tier for high-level optimizations, mid-tier for memory-focused enhancements, and low-tier for low-level IR (LIR) conversion \cite{Graal2021}. This project primarily concentrates on high-tier optimizations within the GraalVM, specifically canonicalization rules for the \texttt{AddNode} and \texttt{AndNode}, as well as loop invariant reassociation, and conditional elimination optimizations.
 
 Canonicalization is an essential early phase in the optimization process, focusing on transforming code into a standardized format and eliminating redundancies. This transformation simplifies and facilitates the application of subsequent optimizations. 
 An example of canonicalization is shown in the code snippet below.
@@ -37,7 +37,7 @@ return (x - y) + y;
 return x;
 \end{lstlisting}
 
-Loop invariant reassociation identifies expressions inside loops that yield the same result in every iteration and moves them outside the loop. This avoids repeated computation and reduces the loop's execution cost. It is a common technique for improving performance in tight computational loops. By reordering operands to group invariant values, the compiler can form a subexpression consisting entirely of invariants, represent it as a floating node, and hoist it outside the loop. An example of loop invariant reassociation is shown in the code snippet below.
+Loop invariant reassociation identifies expressions inside loops that yield the same result in every iteration and moves them outside the loop. This avoids repeated computation and reduces the loop's execution cost. It is a common technique for improving performance in tight computational loops. By reordering operands to group invariant variables together, the compiler can form a subexpression consisting entirely of invariants, represent it as a floating node, and hoist it outside the loop. An example of loop invariant reassociation is shown in the code snippet below.
 
 \begin{lstlisting}[language=Java]
 // Before
@@ -45,6 +45,7 @@ for (int i = 0; i < 1000; i++) {
     // inv1 and inv2 are invariant to the loop
     res = ((i + i) + inv1) + inv2;
 }
+
 // After
 for (int i = 0; i < 1000; i++) {
     res = (i + i) + (inv1 + inv2);
