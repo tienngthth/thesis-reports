@@ -11,7 +11,7 @@ Third, Prolog queries are executed from within GraalVM using Projog, a Java-base
 Together, these steps enables the integration of logic-based optimizations into the GraalVM compilation process. 
 To ensure correctness, the existing GraalVM test suites and new test cases verify the behavior of Prolog rules and validate the integration.
 
-This project implements and evaluates three optimizations: canonicalization, conditional elimination, and loop-invariant reassociation. These are selected to cover a range of optimization types, from simple canonicalization rules to more complex transformations involving control flow and data dependencies.
+This project implements and evaluates three optimizations: canonicalization, loop-invariant reassociation, and conditional elimination. These are selected to cover a range of optimization types, from simple canonicalization rules to more complex transformations involving control flow and data dependencies.
 
 The framework’s performance is evaluated based on optimization throughput, measured as the number of optimization operations performed per second.
 An optimization operation is defined as the process of building the IR graph for a method and applying the optimization phases.

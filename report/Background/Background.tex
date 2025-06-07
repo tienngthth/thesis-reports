@@ -1,8 +1,32 @@
-
 \chapter[Background]{Background}
+
+\section{Graal Intermediate Representation (IR)}
+
+The Graal IR \cite{Duboscq2013} models a program's structure and operations using a directed graph that represents both data and control flow between nodes. Each node in this graph is designed to produce at most a single value and follows the Static Single Assignment (SSA) \cite{Ron1991} form. Data flow is represented by input edges pointing upward to the operand nodes, control flow is depicted by successor edges pointing downwards to the successor nodes. 
+In Graal IR, nodes are categorized as fixed or floating. Fixed nodes represent operations with strict execution order, such as control flow instructions, while floating nodes represent computations without fixed order constraints and can be freely reordered within the graph as long as dependencies are maintained. This flexibility allows the compiler during scheduling to reorder floating nodes to optimize execution. This IR framework provides a robust and efficient structure for code analysis and optimization, where optimization processes transform the graph to enhance overall performance. A critical aspect of this project is the conversion of the Graal IR into Prolog-compatible representations, enabling the optimizer to query and reason about the IR for potential optimizations. Consequently, a thorough understanding of the IR's structure and components is essential to accurately translate and utilize it within the Prolog-based optimization framework.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Packages/graphir.png}
+    \caption{Simple IR Graph}
+    \label{figure:graphir}
+\end{figure}
+
+\autoref{figure:graphir} illustrates a simple IR graph corresponding to the Java code snippet below, with control flow edges highlighted in red. The graph starts at the Start node (node 0), which connects downward to an If node (node 9) that evaluates a condition based on node 6. Following data flow edges upward, this condition node compares parameter 1 (node 2) and constant 0 (node 5). The If node has two successors: the true branch on the left, beginning at node 8, and the false branch on the right, beginning at node 7. Each branch continues downward to Return nodes 11 and 13, respectively. Return node 11 produces its result by following data flow edges upward to node 10, which performs an addition operation, while Return node 13 follows data flow upward to node 12, which performs a subtraction. Both arithmetic nodes take parameter 1 (x) and parameter 2 (y) as the first and second operands. This traversal demonstrates how control and data flows interact to process and complete the function's execution.
+
+\begin{lstlisting}[language=Java]
+public int ifNode(int x, int y) {
+    if (x == 0) {
+        return x + y;
+    }
+    return x - y;
+}
+\end{lstlisting}
+
+
 \section{GraalVM Compiler Optimizations}
 
-In GraalVM, the compilation process is divided into two main phases. The first phase, involving the Graal IR, handles most of the high-level optimizations. This phase is further organized into three tiers: high-tier for high-level optimizations, mid-tier for memory-focused enhancements, and low-tier for low-level IR (LIR) conversion \cite{Graal2021}. This project primarily concentrated on high-tier optimizations within the GraalVM. Specifically, this project worked on canonicalization rules for the \texttt{AddNode} and \texttt{AndNode}, as well as conditional elimination and loop invariant reassociation optimizations.
+In GraalVM, the compilation process is divided into two main phases. The first phase, involving the Graal IR, handles most of the high-level optimizations. This phase is further organized into three tiers: high-tier for high-level optimizations, mid-tier for memory-focused enhancements, and low-tier for low-level IR (LIR) conversion \cite{Graal2021}. This project primarily concentrates on high-tier optimizations within the GraalVM, specifically canonicalization rules for the \texttt{AddNode} and \texttt{AndNode}, as well as loop invariant reassociation optimizations, and conditional elimination.
 
 Canonicalization is an essential early phase in the optimization process, focusing on transforming code into a standardized format and eliminating redundancies. This transformation simplifies and facilitates the application of subsequent optimizations. 
 An example of canonicalization is shown in the code snippet below.
@@ -13,7 +37,8 @@ return (x - y) + y;
 return x;
 \end{lstlisting}
 
-Loop invariant reassociation identifies expressions inside loops that yield the same result in every iteration and moves them outside the loop. This avoids repeated computation and reduces the loop's execution cost. It is a common technique for improving performance in tight computational loops. An example of loop invariant reassociation is shown in the code snippet below. Although not explicitly shown in the snippet, the invariant computation are hoisted outside the loop during IR graph construction, reducing redundant computation and improving performance.
+Loop invariant reassociation identifies expressions inside loops that yield the same result in every iteration and moves them outside the loop. This avoids repeated computation and reduces the loop's execution cost. It is a common technique for improving performance in tight computational loops. By reordering operands to group invariant values, the compiler can form a subexpression consisting entirely of invariants, represent it as a floating node, and hoist it outside the loop. An example of loop invariant reassociation is shown in the code snippet below.
+
 \begin{lstlisting}[language=Java]
 // Before
 for (int i = 0; i < 1000; i++) {
@@ -26,8 +51,8 @@ for (int i = 0; i < 1000; i++) {
 }
 \end{lstlisting}
 
-Conditional elimination is an optimization that removes conditional branches whose outcomes can be determined at compile time. This helps simplify control flow and reduce unnecessary branching in the program. By eliminating conditions that are always true or false, the resulting code is more efficient and easier to optimize further. 
-An example of conditional elimiation is shown in the code snippet below. The condition \(x == 2\) is always false, so the branch can be eliminated, resulting in a more straightforward and efficient code structure.
+Conditional elimination is an optimization that removes conditional branches that will never execute. This helps simplify control flow and reduce unnecessary branching in the program. By eliminating conditions that are always true or false, the resulting code is slightly more efficient and easier to optimize further. 
+An example of conditional elimiation is shown in the code snippet below. The condition \(x == 2\) is always false, so the branch can be eliminated.
 \begin{lstlisting}[language=Java]
 // Before
 if (x == 1) {
@@ -37,18 +62,6 @@ if (x == 1) {
 if (x == 1) {
 }
 \end{lstlisting}
-
-\section{Graal Intermediate Representation (IR)}
-
-The Graal IR \cite{Duboscq2013} models a program's structure and operations using a directed graph that represents both data and control flow between nodes. Each node in this graph is designed to produce a single value and follows the Static Single Assignment (SSA) \cite{Ron1991} form. Data flow is represented by input edges pointing upward to the operand nodes, control flow is depicted by successor edges pointing downwards to the successor nodes. This IR framework provides a robust and efficient structure for code analysis and transformation, where optimization processes involve modifying the graph to enhance overall performance. A critical aspect of this project is the conversion of the Graal IR into Prolog-compatible representations, enabling the optimizer to query and reason about the IR for potential optimizations. Consequently, a thorough understanding of the IR's structure and components is essential to accurately translate and utilize it within the Prolog-based optimization framework.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{Packages/graphir.png}
-    \caption{Simple IR Graph}
-    \label{figure:graphir}
-\end{figure}
-\autoref{figure:graphir} illustrates a simple IR graph, with control flow edges highlighted in red. The graph begins at the Start node, which connects to the Return node via a successor edge. Upon reaching the Return node, the graph traverses upward through data flow edges to compute the returned expression’s value. This traversal demonstrates how control and data flows interact to process and complete the function's execution.
 
 \section{Prolog Programming Language}
 

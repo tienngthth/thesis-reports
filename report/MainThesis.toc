@@ -2,29 +2,29 @@
 \changetocdepth {2}
 \contentsline {chapter}{\chapternumberline {1}Introduction}{2}{chapter.1}%
 \contentsline {chapter}{\chapternumberline {2}Background}{4}{chapter.2}%
-\contentsline {section}{\numberline {2.1}GraalVM Compiler Optimizations}{4}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Graal Intermediate Representation (IR)}{5}{section.2.2}%
+\contentsline {section}{\numberline {2.1}Graal Intermediate Representation (IR)}{4}{section.2.1}%
+\contentsline {section}{\numberline {2.2}GraalVM Compiler Optimizations}{5}{section.2.2}%
 \contentsline {section}{\numberline {2.3}Prolog Programming Language}{6}{section.2.3}%
-\contentsline {chapter}{\chapternumberline {3}Literature Review}{7}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Domain-Specific Languages (DSLs)}{7}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Logic Programming Languages}{8}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Transformation, Rewriting Techniques, and Verification}{9}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Identified Research Gaps}{10}{section.3.4}%
-\contentsline {chapter}{\chapternumberline {4}Implementation}{11}{chapter.4}%
-\contentsline {section}{\numberline {4.1}IR to Prolog Translation}{11}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Prolog Optimization Rules}{12}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Add Node Canonicalization}{13}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}And Node Canonicalization}{15}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Loop Invariant Reassociation}{16}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}Conditional Eliminationtion}{20}{subsection.4.2.4}%
-\contentsline {section}{\numberline {4.3}Query Result Parser}{26}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Supported Term Types}{26}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Grammar Specification}{27}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Recursive Descent Parsing}{27}{subsection.4.3.3}%
-\contentsline {subsection}{\numberline {4.3.4}IR Reconstruction}{28}{subsection.4.3.4}%
-\contentsline {subsection}{\numberline {4.3.5}Example Use Case}{28}{subsection.4.3.5}%
-\contentsline {section}{\numberline {4.4}Prolog Optimization Engine}{29}{section.4.4}%
-\contentsline {chapter}{\chapternumberline {5}Performance Evaluation}{32}{chapter.5}%
-\contentsline {chapter}{\chapternumberline {6}Discussion}{35}{chapter.6}%
-\contentsline {chapter}{\chapternumberline {7}Conclusion}{37}{chapter.7}%
-\contentsline {chapter}{References}{38}{chapter*.4}%
+\contentsline {chapter}{\chapternumberline {3}Literature Review}{8}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Domain-Specific Languages (DSLs)}{8}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Logic Programming Languages}{9}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Transformation, Rewriting Techniques, and Verification}{11}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Identified Research Gaps}{11}{section.3.4}%
+\contentsline {chapter}{\chapternumberline {4}Implementation}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}IR to Prolog Translation}{13}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Prolog Optimization Rules}{14}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Add Node Canonicalization}{15}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}And Node Canonicalization}{17}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Loop Invariant Reassociation}{18}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Conditional Eliminationtion}{22}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Query Result Parser}{28}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Supported Term Types}{28}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Grammar Specification}{29}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Recursive Descent Parsing}{29}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}IR Reconstruction}{30}{subsection.4.3.4}%
+\contentsline {subsection}{\numberline {4.3.5}Example Use Case}{30}{subsection.4.3.5}%
+\contentsline {section}{\numberline {4.4}Prolog Optimization Engine}{31}{section.4.4}%
+\contentsline {chapter}{\chapternumberline {5}Performance Evaluation}{34}{chapter.5}%
+\contentsline {chapter}{\chapternumberline {6}Discussion}{37}{chapter.6}%
+\contentsline {chapter}{\chapternumberline {7}Conclusion}{39}{chapter.7}%
+\contentsline {chapter}{References}{40}{chapter*.4}%

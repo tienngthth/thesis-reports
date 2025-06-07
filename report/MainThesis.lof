@@ -1,14 +1,14 @@
 \addvspace {10pt}
 \addvspace {10pt}
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Simple IR Graph}}{5}{figure.2.1}%
-\contentsline {figure}{\numberline {2.2}{\ignorespaces Example of Prolog specification}}{6}{figure.2.2}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Simple IR Graph}}{4}{figure.2.1}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Example of Prolog specification}}{7}{figure.2.2}%
 \addvspace {10pt}
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Example of Optimizer Patterns and Regular Expression \cite {Spinellis1999}}}{7}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces DOOP's rule for virtual method invocations \cite {Bravenboer2009}}}{8}{figure.3.2}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Simple SQL Injection Example in PQL \cite {Lam2005}}}{9}{figure.3.3}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Conditional canonicalization rules \cite {Webb2023}}}{9}{figure.3.4}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Example of Optimizer Patterns and Regular Expression \cite {Spinellis1999}}}{8}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces DOOP's rule for virtual method invocations \cite {Bravenboer2009}}}{9}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Simple SQL Injection Example in PQL \cite {Lam2005}}}{10}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Conditional canonicalization rules \cite {Webb2023}}}{11}{figure.3.4}%
 \addvspace {10pt}
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Prolog-Based Optimization Workflow}}{31}{figure.4.1}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Prolog-Based Optimization Workflow}}{33}{figure.4.1}%
 \addvspace {10pt}
 \addvspace {10pt}
 \addvspace {10pt}
